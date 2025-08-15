@@ -1,9 +1,26 @@
-Overview
-Learn how to use the database in supastarter.
+# Database Overview
 
-With supastarter you can choose between Prisma and Drizzle as your database ORM.
+Learn how to use the database in supastarter's multi-container architecture.
 
-You can find the schema and configuration in the packages/database directory either in the prisma or drizzle folder.
+## Database Stack
+
+Supastarter uses a modern, type-safe database stack:
+- **SQLModel** - Type-safe ORM built on SQLAlchemy
+- **Supabase PostgreSQL** - Managed PostgreSQL with Row Level Security
+- **Alembic** - Database migrations
+- **Supabase Studio** - Visual database management
+
+## Architecture
+┌─────────────────────────────────────────────────────────────┐
+│                    Database Architecture                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  FastAPI + SQLModel  ←→  Supabase PostgreSQL  ←→  RLS       │
+│         ↓                        ↓                    ↓      │
+│   Type Safety              Managed DB          Security      │
+│   Auto-validation          Real-time           Isolation     │
+│   Relationships            Backups              Policies      │
+└─────────────────────────────────────────────────────────────┘
 
 ## Database Components
 
@@ -116,7 +133,7 @@ SUPABASE_JWT_SECRET=your-jwt-secret
 
 ## Migration from Other ORMs
 
-If migrating from Prisma or Drizzle:
+If migrating from SQLModel or SQLModel:
 
 1. **Schema Conversion**: Convert existing models to SQLModel format
 2. **RLS Setup**: Enable and configure Row Level Security
@@ -124,18 +141,3 @@ If migrating from Prisma or Drizzle:
 4. **Client Updates**: Update all database access to use new patterns
 
 Detailed migration guides are available in each component section.
-Previous
-
-Local Development
-
-Next
-
-Use database client
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

@@ -66,17 +66,3 @@ meta.de.json
     "installation": "Installation"
   }
 }
-Previous
-
-
-Next
-
-Meta tags
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

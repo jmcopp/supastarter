@@ -218,18 +218,3 @@ if (isPending) return <div>Loading...</div>;
 if (!posts?.length) return <div>No posts found</div>;
  
 return <div>{posts.map((post) => <div key={post.id}>{post.title}</div>)}</div>;
-Previous
-
-Use organizations in your application
-
-Next
-
-Overview
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

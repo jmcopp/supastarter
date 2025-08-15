@@ -30,7 +30,7 @@ For example when you are using Stripe, you need to provide the following secrets
 
 STRIPE_SECRET_KEY: Your secret key for the Stripe api
 Writing e2e tests
-The e2e tests are located in the apps/web/tests folder. To create a new test suite, create a new *.spec.ts file in this folder:
+The e2e tests are located in the frontend/tests folder. To create a new test suite, create a new *.spec.ts file in this folder:
 
 
 import { expect, test } from "@playwright/test";
@@ -45,19 +45,3 @@ test.describe("some feature", () => {
 Playwright will then automatically pick up the test suite and run it.
 
 Learn more about writing e2e tests in the Playwright documentation.
-
-Previous
-
-Sentry
-
-Next
-
-Supabase setup
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

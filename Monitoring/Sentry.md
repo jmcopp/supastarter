@@ -21,9 +21,9 @@ Add the Sentry SDK to your web application by running the following command:
 
 pnpm --filter web add @sentry/nextjs
 3. Add Sentry to Next.js config
-In your /apps/web/next.config.ts file, add the Sentry plugin:
+In your /frontend/next.config.ts file, add the Sentry plugin:
 
-apps/web/next.config.ts
+frontend/next.config.ts
 
 import { withSentryConfig } from "@sentry/nextjs";
  
@@ -44,7 +44,7 @@ _Note Make sure to call the with* functions in the correct order, as there might
 
 As we are using the tunnel route, we need to make sure that the middleware is not blocking the request to the tunnel route. For this we need to extend the matcher to the middleware config:
 
-apps/web/middleware.ts
+frontend/middleware.ts
 
 // ...
 export const config = {
@@ -53,11 +53,11 @@ export const config = {
 	],
 };
 3. Create sentry config files
-Create the following files in the /apps/web folder:
+Create the following files in the /frontend folder:
 
 Note: Replace the DSN url with the one from your Sentry project.
 
-apps/web/sentry.client.config.ts
+frontend/sentry.client.config.ts
 
 import * as Sentry from "@sentry/nextjs";
  
@@ -69,7 +69,7 @@ Sentry.init({
 	replaysOnErrorSampleRate: 1.0,
 	debug: false,
 });
-apps/web/sentry.server.config.ts
+frontend/sentry.server.config.ts
 
 import * as Sentry from "@sentry/nextjs";
  
@@ -78,7 +78,7 @@ Sentry.init({
 	tracesSampleRate: 1,
 	debug: false,
 });
-apps/web/sentry.server.config.ts
+frontend/sentry.server.config.ts
 
 import * as Sentry from "@sentry/nextjs";
  
@@ -90,9 +90,9 @@ Sentry.init({
 4. Set up Next.js intstrumentation
 Next, we will set up Next.js intstrumentation to capture errors and performance data for the different types of requests.
 
-Create a new file in the /apps/web folder:
+Create a new file in the /frontend folder:
 
-apps/web/instrumentation.ts
+frontend/instrumentation.ts
 
 import * as Sentry from "@sentry/nextjs";
  
@@ -108,9 +108,9 @@ export async function register() {
  
 export const onRequestError = Sentry.captureRequestError;
 5. Create global error handler
-Create a new file in the /apps/web/app folder:
+Create a new file in the /frontend/app folder:
 
-apps/web/app/global-error.tsx
+frontend/app/global-error.tsx
 
 "use client";
  
@@ -150,19 +150,3 @@ And that's it! You can now start your application and see the errors and perform
 You can find a full example of the Sentry setup in the repository supastarter-nextjs/feat/sentry-integration repository.
 
 For more information and further use cases, check out the offical Sentry setup guide for Next.js.
-
-Previous
-
-Overview
-
-Next
-
-E2E testing
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

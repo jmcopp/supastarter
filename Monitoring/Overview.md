@@ -5,19 +5,3 @@ Monitoring is a crucial part of any production application. It helps you underst
 
 Sentry
 Learn how to set up Sentry for your supastarter app.
-
-Previous
-
-Custom Analytics
-
-Next
-
-Sentry
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

@@ -30,7 +30,7 @@ To use the debugger in VSCode with supastarter, you need to add a new configurat
       "runtimeArgs": ["run", "dev"],
       "restart": true,
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/apps/web",
+      "cwd": "${workspaceFolder}/frontend",
       "envFile": "${workspaceFolder}/.env.local"
     }
   ]
@@ -52,7 +52,7 @@ This is because of the use of req.nextUrl.origin in the middleware.ts file, whic
 
 The simple fix is to replace all occurrences of req.nextUrl.origin with getBaseUrl() in the middleware.ts and the middleware-helpers.ts file:
 
-apps/web/middleware.ts
+frontend/middleware.ts
 
 import { getBaseUrl } from "@repo/utils"; 
  
@@ -80,18 +80,3 @@ export const getSession = async (req: NextRequest): Promise<Session | null> => {
  
  // ...
 };
-Previous
-
-Configuration
-
-Next
-
-Project structure
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

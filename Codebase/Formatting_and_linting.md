@@ -29,18 +29,3 @@ To fix all the linting errors in your codebase run:
 
 
 pnpm lint --fix
-Previous
-
-Manage dependencies
-
-Next
-
-Dependabot updates in Github
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

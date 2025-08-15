@@ -153,13 +153,13 @@ class Settings(BaseSettings):
         env_file = ".env"
 ```
 Plan information for pricing table
-You can define the information for the pricing table for each plan in the usePlanData hook in /apps/web/modules/saas/payments/hooks/plan-data.ts.
+You can define the information for the pricing table for each plan in the usePlanData hook in /frontend/modules/saas/payments/hooks/plan-data.ts.
 
 You can define a title, a description and a features array for each plan.
 
 We recommend you to use the t() function to get the translations for the plan information and then define the translations in the /packages/i18n/translations/ folder.
 
-/apps/web/modules/saas/payments/hooks/plan-data.ts
+/frontend/modules/saas/payments/hooks/plan-data.ts
 
 export function usePlanData() {
 	const t = useTranslations();
@@ -200,20 +200,4 @@ export function usePlanData() {
  
 	return { planData };
 }
-Note: When you remove one of the existing plans, make sure to remove the corresponding entry in the /apps/web/modules/saas/payments/hooks/plan-data.ts file, otherwise you will get a type error.
-
-Previous
-
-Polar
-
-Next
-
-Check for purchases or subscriptions
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-
+Note: When you remove one of the existing plans, make sure to remove the corresponding entry in the /frontend/modules/saas/payments/hooks/plan-data.ts file, otherwise you will get a type error.

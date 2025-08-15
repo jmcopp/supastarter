@@ -1,4 +1,5 @@
-Use locale in API endpoints
+# Use Locale in API Endpoints
+
 Learn how to use the users locale in your supastarter API endpoints.
 
 Sometimes you need to use the users locale in your API endpoints. For example, you might want to fetch data from a database that is localized or if you want to send an email in the users locale.
@@ -39,19 +40,3 @@ async def send_localized_email(
 ```
 
 This dependency will provide the locale from the locale cookie of the user, the Accept-Language header, or default to the application's default locale.
-
-Previous
-
-Use API in application
-
-Next
-
-Streaming responses
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

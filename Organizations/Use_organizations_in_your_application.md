@@ -117,19 +117,3 @@ async def get_organization(
 ```
 
 To learn more about how to use organizations with Supabase Auth, please refer to the Supabase documentation and the Authentication section of this guide.
-
-Previous
-
-Configure organizations
-
-Next
-
-Store data for organizations
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

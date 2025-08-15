@@ -11,14 +11,14 @@ Deploying your SaaS as a Docker container allows you to have complete control ov
 Setup Next.js app for docker deployment
 To get started we first need to configure our Next.js app to be built as a standalone app, so we can later run the application in a docker container. To do so, add the following next.config.ts file to your project:
 
-apps/web/next.config.ts
+frontend/next.config.ts
 
 const nextConfig: NextConfig = {
   //...
   output: "standalone",
 };
 Setup docker configuration for the Next.js app
-Next, create a Dockerfile in the root of your Next.js app (apps/web/Dockerfile) with the following content:
+Next, create a Dockerfile in the root of your Next.js app (frontend/Dockerfile) with the following content:
 
 
 FROM node:22-alpine AS base
@@ -57,12 +57,12 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 USER nextjs
  
-COPY --from=installer /app/apps/web/next.config.ts .
-COPY --from=installer /app/apps/web/package.json .
+COPY --from=installer /app/frontend/next.config.ts .
+COPY --from=installer /app/frontend/package.json .
  
-COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+COPY --from=installer --chown=nextjs:nodejs /app/frontend/.next/standalone ./
+COPY --from=installer --chown=nextjs:nodejs /app/frontend/.next/static ./frontend/.next/static
+COPY --from=installer --chown=nextjs:nodejs /app/frontend/public ./frontend/public
  
 USER nextjs
  
@@ -71,7 +71,7 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
  
-CMD ["node", "apps/web/server.js"]
+CMD ["node", "frontend/server.js"]
 In the root of the supastarter project, also add a .dockerignore file with the following content:
 
 
@@ -89,7 +89,7 @@ Running your app locally with Docker
 If you have Docker installed on your local machine and want to run your Next.js app there for testing the docker image, simply run the following commands from your project’s root:
 
 
-docker build -f apps/web/Dockerfile . --no-cache -t supastarter-docker
+docker build -f frontend/Dockerfile . --no-cache -t supastarter-docker
 docker run -p 3000:3000 supastarter-docker
 To fully use the application, you need to pass the necessary environment variables you have defined in your .env.local file to the container.
 
@@ -97,19 +97,3 @@ Now you can deploy your app to any server that supports docker images.
 
 Troubleshooting
 If you are getting a SSL error like ERR_SSL_PACKET_LENGTH_TOO_LONG or ERR_SSL_WRONG_VERSION_NUMBER, see our troubleshooting guide for a quick fix.
-
-Previous
-
-Netlify
-
-Next
-
-Coolify
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

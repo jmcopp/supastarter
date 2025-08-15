@@ -1,30 +1,19 @@
-Overview
+# Payments Overview
+
 Learn how to use payments & subscriptions in supastarter.
 
 supastarter comes with a generic payments module that enables you to charge your users and let them manage their subscriptions.
 
-Setup payment provider
+## Setup Payment Provider
+
 Follow the setup guide for your preferred payment provider:
 
-Stripe
-Lemonsqueezy
-Creem
-Polar
-Working with payments in your application
-Manage plans and products
-Check for purchases or subscriptions
-Previous
+- [Stripe](Payment_providers.md#stripe)
+- [Lemonsqueezy](Payment_providers.md#lemonsqueezy)
+- [Creem](Payment_providers.md#creem)
+- [Polar](Payment_providers.md#polar)
 
-Store data for organizations
+## Working with Payments in Your Application
 
-Next
-
-Stripe
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-
+- [Manage plans and products](Manage_plans_and_products.md)
+- [Check for purchases or subscriptions](Check_for_purchases_or_subscriptions.md)

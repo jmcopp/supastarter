@@ -6,16 +6,16 @@ In this guide, we'll take you through the process of implementing a feature in s
 Overview
 The feedback widget consists of:
 
-Database Schema: Prisma model to store feedback data
+Database Schema: SQLModel model to store feedback data
 Database Queries: Dedicated query functions for feedback operations
 API Endpoint: REST API to handle feedback submissions with session integration
 Frontend Component: React component with form and UI
 Translations: Internationalization support for the widget
 Step 1: Database Schema
-First, we added a Feedback model to the Prisma schema:
+First, we added a Feedback model to the SQLModel schema:
 
 
-// packages/database/prisma/schema.prisma
+// api-main/app/models/prisma/schema.prisma
  
 model Feedback {
     id        String   @id @default(cuid())
@@ -42,7 +42,7 @@ Step 2: Database Queries
 Created dedicated query functions for feedback operations:
 
 
-// packages/database/prisma/queries/feedback.ts
+// api-main/app/models/prisma/queries/feedback.ts
 import { db } from "../client";
  
 export async function createFeedback({
@@ -74,7 +74,7 @@ export async function createFeedback({
 Updated the queries index to export the feedback functions:
 
 
-// packages/database/prisma/queries/index.ts
+// api-main/app/models/prisma/queries/index.ts
 export * from "./ai-chats";
 export * from "./feedback";
 export * from "./organizations";
@@ -186,7 +186,7 @@ Step 4: Frontend Component
 Created a React component with form validation, session integration, and internationalization:
 
 
-// apps/web/modules/shared/components/FeedbackWidget.tsx
+// frontend/modules/shared/components/FeedbackWidget.tsx
 "use client";
  
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -504,7 +504,7 @@ Step 6: Integration
 Add the feedback widget to your layout or pages:
 
 
-// apps/web/app/(marketing)/layout.tsx
+// frontend/app/(marketing)/layout.tsx
 import { FeedbackWidget } from "@modules/shared/components/FeedbackWidget";
  
 export default function MarketingLayout({
@@ -532,7 +532,7 @@ Conditional Fields: Name and email fields are hidden for logged-in users
 Internationalization: Full i18n support with English and German translations
 Form Validation: Client-side validation with Zod schema
 Responsive Design: Mobile-friendly UI with Tailwind CSS
-Database Storage: Persistent storage with Prisma ORM
+Database Storage: Persistent storage with SQLModel ORM
 API Integration: RESTful API with proper error handling
 Type Safety: Full TypeScript support throughout the stack
 Usage
@@ -570,7 +570,7 @@ Conclusion
 This guide demonstrates how to build a complete feedback widget in supastarter, covering all aspects from database design to user interface. The implementation follows supastarter's best practices:
 
 Type Safety: Full TypeScript integration throughout the stack
-Database Design: Proper Prisma schema with relationships
+Database Design: Proper SQLModel schema with relationships
 API Design: RESTful endpoints with validation and error handling
 UI/UX: Modern, accessible components with Shadcn UI
 Internationalization: Multi-language support
@@ -587,15 +587,3 @@ Consider user experience and accessibility
 Plan for scalability and maintenance
 Follow the established patterns in your codebase
 This pattern can be applied to build other features like contact forms, support tickets, or any user input system. The feedback widget demonstrates the power and flexibility of the supastarter framework for building real-world applications.
-
-Previous
-
-Supabase setup
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

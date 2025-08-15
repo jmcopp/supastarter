@@ -150,18 +150,3 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
 ```
-Previous
-
-Overview
-
-Next
-
-Lemonsqueezy
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

@@ -45,18 +45,3 @@ Updating is a bit easier since there is a nice way to update a package in all wo
 
 
 pnpm update -r <package-name>
-Previous
-
-Update the codebase
-
-Next
-
-Formatting and linting
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

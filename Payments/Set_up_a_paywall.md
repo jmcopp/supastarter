@@ -22,19 +22,3 @@ export const config = {
   },
 }
 This will remove the free plan and redirect the users to the /app/choose-plan page after the signup (and the onboarding flow).
-
-Previous
-
-Check for purchases or subscriptions
-
-Next
-
-Overview
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

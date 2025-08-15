@@ -48,78 +48,37 @@ supastarter is highly configurable with environment-based settings that support 
 
 Learn more in the [Configuration](Configuration.md) section.
 
-Features
-This is just a quick overview of the features and pages included in supastarter. You can learn all about the included features in the features section. To find out about how to use them, head to the according documentation pages.
+## Features
 
-Marketing site
-Home
+This is just a quick overview of the features and pages included in supastarter. You can learn all about the included features in the documentation sections.
 
+### Marketing Site
+- **Home Page** - Landing page with hero section and feature highlights
+- **Features Page** - Detailed feature showcase and comparisons
+- **Pricing Page** - Subscription plans and pricing tiers
+- **Contact Page** - Contact form and support information
+- **Footer** - Site navigation and legal links
 
-Features
+### SaaS Application
 
+#### Authentication System
+- **Login** - User authentication with email/password and OAuth
+- **Signup** - User registration with email verification
+- **Forgot Password** - Password reset functionality
 
-Pricing
+#### User Management
+- **User Dashboard** - Personal dashboard with activity overview
+- **Account Settings**
+  - General settings and profile management
+  - Security settings and password changes
+  - Billing management and subscription control
 
+#### Organizations (Multi-tenant)
+- **Organization Dashboard** - Team overview and metrics
+- **Organization Settings**
+  - General organization configuration
+  - Member management and role assignments
 
-
-
-Contact
-
-
-Footer
-
-
-SaaS application
-Authentication
-Login
-
-
-Signup
-
-
-Forgot password
-
-
-User
-User dashboard
-
-
-Account Settings
-General
-
-
-Security
-
-
-Billing
-
-
-Organizations
-Organization dashboard
-
-
-Organization settings
-General
-
-
-Organization members
-
-
-Administration
-Users
-
-
-Organizations
-
-
-Next
-
-Tech Stack
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-
+#### Administration
+- **User Management** - Admin interface for user oversight
+- **Organization Management** - Admin tools for organization control

@@ -3,9 +3,9 @@ Learn how to set meta tags for pages in your supastarter app.
 
 Meta tags are used to describe the content of a page. It's important to set these tags for each page, as it helps search engines understand what the page is about and can improve the SEO of your app.
 
-Per default, your application has set a base title for each page, which is defined in the /apps/web/app/layout.tsx file.
+Per default, your application has set a base title for each page, which is defined in the `/frontend/app/layout.tsx` file.
 
-apps/web/app/layout.tsx
+**File**: `frontend/app/layout.tsx`
 
 export const metadata: Metadata = {
 	title: {
@@ -20,7 +20,7 @@ If a title is set for a page, it the template will be applied to the title, so i
 
 To set a meta tags for a specific page, use the generateMetadata function in that page:
 
-apps/web/app/changelog/page.tsx
+frontend/app/changelog/page.tsx
 
 export const generateMetadata = () => {
 	return {
@@ -30,7 +30,7 @@ export const generateMetadata = () => {
 };
 To have an internationalized title, you can also use translations in the generateMetadata function:
 
-apps/web/app/changelog/page.tsx
+frontend/app/changelog/page.tsx
 
 export async function generateMetadata() {
 	const t = await getTranslations();
@@ -40,18 +40,3 @@ export async function generateMetadata() {
 	};
 }
 Learn more about how to set meta tags in the offical Next.js documentation.
-
-Previous
-
-
-Next
-
-Sitemap
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

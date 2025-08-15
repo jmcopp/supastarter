@@ -10,7 +10,7 @@ OnboardingForm.tsx - The container component that manages step navigation
 Individual step components (e.g., OnboardingStep1.tsx)
 Adding a New Step
 1. Create the Step Component
-Create a new file for your step component in apps/web/modules/saas/onboarding/components/. For example, OnboardingStep2.tsx (you could also name it semantically, e.g. OnboardingStepTeam.tsx):
+Create a new file for your step component in frontend/modules/saas/onboarding/components/. For example, OnboardingStep2.tsx (you could also name it semantically, e.g. OnboardingStepTeam.tsx):
 
 
 "use client";
@@ -110,18 +110,3 @@ The onboarding state is tracked in the URL using the step query parameter
 If you want to make the process more robust, you could add a onboardingStep cookie to track the step in case the user navigates away from the page and comes back later.
 The final onCompleted function updates the user's onboardingComplete status and redirects to the app
 Each step component should be a client component (use "use client" directive)
-Previous
-
-Create a dashboard page
-
-Next
-
-Overview
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

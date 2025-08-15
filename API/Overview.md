@@ -94,18 +94,3 @@ async def get_user_items(user_id: str, db: AsyncSession):
     statement = select(Item).where(Item.owner_id == user_id)
     return await db.exec(statement).all()
 ```
-Previous
-
-Update schema & migrate changes
-
-Next
-
-Define an API endpoint
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-
