@@ -188,18 +188,3 @@ async def create_task_queue():
     
     return queue
 ```
-Previous
-
-trigger.dev
-
-Next
-
-Going to production
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

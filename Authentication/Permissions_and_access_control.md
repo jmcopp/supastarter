@@ -1,13 +1,15 @@
-Permissions and access control
+# Permissions and Access Control
+
 Learn how use permissions and access control in your supastarter frontend application.
 
 We have already guided you through the process of how implement access control in the API routes of your application. In this guide we will show you how you can protect pages and display UI based on the users role or permissions.
 
-Protect a route (server side)
-For authenticated users
+## Protect a Route (Server Side)
+
+### For Authenticated Users
 To protect a route to be only accessible for authenticated users, you can simply get the session in the RSC component and check if the user is authenticated.
 
-Note: When you are inside the /apps/web/app/(saas)/app directory, you don't need to check if the user is authenticated, because the session is verified in the middleware.
+Note: When you are inside the /frontend/app/(saas)/app directory, you don't need to check if the user is authenticated, because the session is verified in the middleware.
 
 
 import { getSession } from "@saas/auth/lib/server";
@@ -153,18 +155,3 @@ export function MyComponent() {
  
     return <div>This page is only accessible for organization admins</div>;
 }
-Previous
-
-User and session
-
-Next
-
-oAuth
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

@@ -11,7 +11,7 @@ supastarter includes a hand full of mail templates for things like magic links, 
 
 
 
-You can find them in the /packages/mail/emails directory. Each mail template is a React component that you can customize to your needs.
+You can find them in the /api-main/app/services/emails directory. Each mail template is a React component that you can customize to your needs.
 
 You definitely want to change the logo inside the mail template Wrapper.tsx to your own logo. The colors will be automatically adjusted to your brand colors from the tailwind config.
 
@@ -92,7 +92,7 @@ All pages have a meta title and description
 
 All pages that should be indexed are added to the sitemap
 Legal pages
-supastarter has defined a few placeholder pages for legal pages, like privacy policy which you edit in the /apps/web/content/legal/*.md files.
+supastarter has defined a few placeholder pages for legal pages, like privacy policy which you edit in the /frontend/content/legal/*.md files.
 
 Common legal pages are:
 
@@ -131,18 +131,3 @@ Things to check:
 App is deployed to a region close to your database location
 
 App is deployed to a region close to your target audience
-Previous
-
-Upstash QStash
-
-Next
-
-Overview
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

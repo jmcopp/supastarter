@@ -515,18 +515,3 @@ await updateUserMetadata({
 6. **Store minimal data in user_metadata** (use database for complex data)
 
 The session management system provides seamless integration between frontend Supabase Auth and backend FastAPI authentication with full type safety and security.
-Previous
-
-Overview
-
-Next
-
-Permissions and access control
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

@@ -28,48 +28,9 @@ Supastarter uses a **container-first approach** optimized for production deploym
 - Security hardening with non-root users
 - Container orchestration ready
 
-### Single-Container Platforms
-*Note: These require architectural modifications for optimal performance*
+## Self-Hosted Alternative
 
-**[Vercel](Vercel.md)**
-- Next.js optimized but API limitations
-- Serverless functions instead of dedicated API containers
-- Best for frontend-heavy applications
-
-**[Render](Render.md)**
-- Docker support but single-container per service
-- Good alternative to Fly.io
-- Simpler setup but less optimization
-
-**[Netlify](Netlify.md)**
-- Static site deployment with serverless functions
-- Limited backend capabilities
-- Best for JAMstack applications
-
-## Multi-Service Deployment
-
-### Hybrid Platform Strategy
-You can deploy frontend and API services on different platforms:
-
-```
-Frontend (Vercel) ↔️ API (Fly.io) ↔️ Database (Supabase)
-```
-
-**Benefits**:
-- Optimize each service for its platform strengths
-- Leverage platform-specific features
-- Independent scaling and deployment cycles
-
-**Considerations**:
-- Cross-origin request configuration
-- Latency between services
-- More complex monitoring and debugging
-
-### [Standalone API Deployment](Standalone_API.md)
-**Best for**: Microservices architecture or API-first development
-- Deploy FastAPI containers independently
-- Multiple frontend applications
-- API versioning and backwards compatibility
+For teams requiring full control over their infrastructure, Docker containerization provides a flexible self-hosted option while maintaining the same multi-container architecture benefits.
 
 ## Architecture Comparison
 
@@ -77,8 +38,6 @@ Frontend (Vercel) ↔️ API (Fly.io) ↔️ Database (Supabase)
 |----------|--------------|---------|-------------|------------|
 | **Fly.io** | Multi-container | Auto + Scale-to-zero | $5-25/mo | Medium |
 | **Docker + VPS** | Self-hosted containers | Manual | $10-50/mo | High |
-| **Vercel** | Serverless functions | Automatic | $0-100/mo | Low |
-| **Render** | Single containers | Auto | $7-25/mo | Medium |
 
 ## Security Considerations
 
@@ -98,14 +57,3 @@ Frontend (Vercel) ↔️ API (Fly.io) ↔️ Database (Supabase)
 - **Error tracking** with Sentry integration
 
 Choose your deployment platform based on your specific requirements, team expertise, and budget constraints.
-
----
-
-**Previous**: [SEO Configuration](../SEO/Overview.md)  
-**Next**: [Fly.io Deployment](Fly_io.md)
-
-© 2025 supastarter. All rights reserved.
-
-
-
-

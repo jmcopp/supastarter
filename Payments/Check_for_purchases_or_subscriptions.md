@@ -207,18 +207,3 @@ purchases = await get_purchases(
 helper = create_purchases_helper(purchases)
 active_plan = helper.active_plan
 ```
-Previous
-
-Manage plans and products
-
-Next
-
-Set up a paywall
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

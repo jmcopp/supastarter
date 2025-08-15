@@ -52,18 +52,3 @@ Deactivate Dependabot
 If you don't want to use Dependabot (which we do not recommend, as you want to stay up to date with the latest package versions), you can deactivate it by simply deleting the .github/dependabot.yml file.
 
 If you want to reactivate it later, you can simply add it back.
-
-Previous
-
-Formatting and linting
-
-Next
-
-Local Development
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-

@@ -158,18 +158,3 @@ For example to add the skeleton component you would run:
 
 
 pnpm --filter=web shadcn-ui add skeleton
-Previous
-
-Overview
-
-Next
-
-Create a dashboard page
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

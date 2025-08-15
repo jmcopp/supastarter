@@ -1,211 +1,422 @@
-Overview
-Learn how to send emails in your supastarter application.
+# Mailing Overview
 
-For mails supastarter integrates React Email which enables you to write your mails in React.
+Learn how to send emails in supastarter's multi-container architecture.
 
-Why React Email:
-It gives you the ability to style your mails with Tailwind CSS just like in your application. Of course the config from your app is reused for your mails. It also gives you the ability to use components in your mails, so you can build a generic template and use it in all your mails.
+## Architecture
 
-Providers
-In the mail package in your repository you can find the provider folder.
+Supastarter implements email functionality in the **FastAPI backend** with support for multiple email providers and template rendering.
 
-There are multiple providers available:
+## Email Stack
 
-Plunk
-Postmark
-Resend
-Nodemailer
-Console
-Custom provider
-Set from mail address
-Next up, set the from mail address in the config/index.ts file. This is the mail address that will be used as the sender of all mails. Please make sure that the mail address and domain are verified in your mail provider.
+- **FastAPI** - Email service integration
+- **Jinja2** - Email template rendering
+- **Multiple Providers** - Resend, SendGrid, Postmark, SMTP
+- **Async Support** - Non-blocking email sending
 
+## Email Service Setup
 
-export const config = {
-  mails: {
-    from: "example@example.com",
-  },
-};
-Mail templates
-In the mail package in your repository you can find the templates folder. In here all your mail templates are located.
+### Core Email Service
 
+**File**: `api-main/app/services/email.py`
 
+```python
+from typing import Dict, List, Optional
+from abc import ABC, abstractmethod
+import aiohttp
+from jinja2 import Environment, FileSystemLoader
+from app.core.config import settings
+import logging
 
-To preview your templates while developing you can run the following command in your terminal:
+logger = logging.getLogger(__name__)
 
+class EmailProvider(ABC):
+    @abstractmethod
+    async def send(
+        self,
+        to: List[str],
+        subject: str,
+        html: str,
+        text: Optional[str] = None
+    ) -> bool:
+        pass
 
-pnpm --filter mail preview
-This will start a local server on port 3005 where you can preview your mails.
+class ResendProvider(EmailProvider):
+    def __init__(self):
+        self.api_key = settings.RESEND_API_KEY
+        self.base_url = "https://api.resend.com/emails"
+    
+    async def send(
+        self,
+        to: List[str],
+        subject: str,
+        html: str,
+        text: Optional[str] = None
+    ) -> bool:
+        async with aiohttp.ClientSession() as session:
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            data = {
+                "from": settings.EMAIL_FROM,
+                "to": to,
+                "subject": subject,
+                "html": html,
+                "text": text or ""
+            }
+            
+            async with session.post(
+                self.base_url,
+                json=data,
+                headers=headers
+            ) as response:
+                return response.status == 200
 
-If this isn't working for you, try running the following command in the packages/mail/.react-email subfolder:
+class EmailService:
+    def __init__(self):
+        # Select provider based on configuration
+        if settings.EMAIL_PROVIDER == "resend":
+            self.provider = ResendProvider()
+        elif settings.EMAIL_PROVIDER == "sendgrid":
+            self.provider = SendGridProvider()
+        elif settings.EMAIL_PROVIDER == "postmark":
+            self.provider = PostmarkProvider()
+        else:
+            self.provider = SMTPProvider()
+        
+        # Setup Jinja2 for templates
+        self.template_env = Environment(
+            loader=FileSystemLoader("app/templates/emails")
+        )
+    
+    async def send_email(
+        self,
+        to: str | List[str],
+        template: str,
+        context: Dict,
+        subject: Optional[str] = None
+    ) -> bool:
+        """Send email using template."""
+        # Ensure to is a list
+        to_list = [to] if isinstance(to, str) else to
+        
+        # Render template
+        template_obj = self.template_env.get_template(f"{template}.html")
+        html_content = template_obj.render(**context)
+        
+        # Get subject from template or use provided
+        if not subject:
+            subject = self._extract_subject(html_content)
+        
+        # Send email
+        try:
+            result = await self.provider.send(
+                to=to_list,
+                subject=subject,
+                html=html_content
+            )
+            
+            if result:
+                logger.info(f"Email sent to {to_list} using template {template}")
+            else:
+                logger.error(f"Failed to send email to {to_list}")
+            
+            return result
+        except Exception as e:
+            logger.error(f"Email sending error: {str(e)}")
+            return False
+    
+    def _extract_subject(self, html: str) -> str:
+        """Extract subject from HTML title tag."""
+        import re
+        match = re.search(r'<title>(.*?)</title>', html)
+        return match.group(1) if match else "No Subject"
 
+# Global email service instance
+email_service = EmailService()
+```
 
-# run this in packages/mail/.react-email
-npm i
-Create a mail template
-To create a new mail template, simply create a new .tsx in the templates folder that has a default export of a React component.
+## Email Templates
 
-To use variables, just define them as props of your component.
+### Base Template
 
-The translation strings for your mail templates are defined in the packages/i18n/translatinons folder.
+**File**: `api-main/app/templates/emails/base.html`
 
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block subject %}{% endblock %}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        .content {
+            padding: 30px 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            border-top: 1px solid #e5e5e5;
+            color: #666;
+            font-size: 14px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #4F46E5;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="{{ logo_url }}" alt="Logo" style="height: 40px;">
+    </div>
+    
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <div class="footer">
+        <p>© 2024 {{ company_name }}. All rights reserved.</p>
+        <p>
+            <a href="{{ unsubscribe_url }}">Unsubscribe</a> |
+            <a href="{{ privacy_url }}">Privacy Policy</a>
+        </p>
+    </div>
+</body>
+</html>
+```
 
-import { Link, Text } from "@react-email/components";
-import { createTranslator } from "use-intl/core";
-import type { BaseMailProps } from "../types";
-import PrimaryButton from "./components/PrimaryButton";
-import Wrapper from "./components/Wrapper";
- 
-export function MagicLink({
-  url,
-  name,
-  otp,
-  locale,
-  translations,
-}: {
-  url: string;
-  name: string;
-  otp: string;
-} & BaseMailProps): JSX.Element {
-  const t = createTranslator({
-    locale,
-    messages: translations,
-    namespace: "mail",
-  });
- 
-  return (
-    <Wrapper>
-      <Text>{t("magicLink.body", { name })}</Text>
- 
-      <Text>
-        {t("common.otp")}
-        <br />
-        <strong className="text-2xl font-bold">{otp}</strong>
-      </Text>
- 
-      <Text>{t("common.useLink")}</Text>
- 
-      <PrimaryButton href={url}>{t("magicLink.login")} &rarr;</PrimaryButton>
- 
-      <Text className="text-muted-foreground text-sm">
-        {t("common.openLinkInBrowser")}
-        <Link href={url}>{url}</Link>
-      </Text>
-    </Wrapper>
-  );
-}
- 
-export default MagicLink;
-Check out the offical docs of React Email for more information on how to use it and the available components.
+### Welcome Email Template
 
-Register the mail template
-Before you can use your new mail template, you have to register it in the lib/templates.ts file:
+**File**: `api-main/app/templates/emails/welcome.html`
 
+```html
+{% extends "base.html" %}
 
-import { NewMail } from "../templates/NewMail";
- 
-export const mailTemplates = {
-  //...
-  newMail: NewMail,
-};
-Use the mail template
-Now you can send a mail with your template using the sendMail method in your application:
+{% block subject %}Welcome to {{ app_name }}!{% endblock %}
 
+{% block content %}
+<h2>Welcome, {{ name }}!</h2>
 
-import { sendMail } from "mail";
- 
-await sendMail({
-  to: "tim@apple.com",
-  template: "newMail",
-  context: {
-    name: "Tim Cook",
-  },
-});
-Edit mail template wrapper
-All mail templates are wrapped in the Wrapper.tsx component which provides the base layout for the emails and also includes the logo. You most likely want to change the logo to your own logo and if you want to adjust the common layout of the emails you can do so here. In here you can also adjust the Tailwind CSS config that will be used across the email templates.
+<p>Thank you for joining {{ app_name }}. We're excited to have you on board!</p>
 
+<p>Here's what you can do next:</p>
+<ul>
+    <li>Complete your profile</li>
+    <li>Explore our features</li>
+    <li>Connect with other users</li>
+</ul>
 
-export default function Wrapper({ children }: PropsWithChildren) {
-	return (
-		<Html lang="en">
-			<Head>
-				<Font
-					fontFamily="Inter"
-					fallbackFontFamily="Arial"
-					fontWeight={400}
-					fontStyle="normal"
-				/>
-			</Head>
-			<Tailwind
-				config={{
-     // ...
-				}}
-			>
-				<Section className="bg-background p-4">
-					<Container className="rounded-lg bg-card p-6 text-card-foreground">
-						<Logo />
-						{children}
-					</Container>
-				</Section>
-			</Tailwind>
-		</Html>
-	);
-}
-The logo can be adjusted in the packages/mail/src/components/Logo.tsx component.
+<center>
+    <a href="{{ dashboard_url }}" class="button">Go to Dashboard</a>
+</center>
 
-Translations
-All mail templates can be translated using the use-intl (the core library of next-intl) package. The translations are defined in the packages/i18n/translations folder.
+<p>If you have any questions, feel free to reach out to our support team.</p>
 
-To use translations in your mail templates, you can use the createTranslator function from use-intl/core.
+<p>Best regards,<br>The {{ app_name }} Team</p>
+{% endblock %}
+```
 
-Each mail template is passed the locale and translations props. The locale is the current locale of the user and the translations are the translations for the current locale.
+## Configuration
 
+### Environment Variables
 
-import { createTranslator } from "use-intl/core";
- 
-export function MyMailTemplate({
-  locale,
-  translations,
-}: BaseMailProps) {
-  const t = createTranslator({
-    locale,
-    messages: translations,
-    namespace: "mail",
-  });
- 
-  return (
-    <Wrapper>
-      <Text>{t("myMailTemplate.body")}</Text>
-    </Wrapper>
-  );
-}
-Per default the sendEmail function will use the default locale you defined in your config/index.ts.
+**File**: `api-main/.env`
 
-The API uses the sendEmail function to send various mails like the magic link mail or the password reset mail. In the API we have a locale variable available in the context which will be automatically read from the users locale cookie, so it will match the selected language of the user for each request.
+```bash
+# Email Configuration
+EMAIL_PROVIDER=resend  # or sendgrid, postmark, smtp
+EMAIL_FROM=hello@yourdomain.com
+EMAIL_REPLY_TO=support@yourdomain.com
 
-If you want to send a mail in a specific language you can pass the locale prop to the sendEmail function:
+# Provider-specific
+RESEND_API_KEY=re_...
+# or
+SENDGRID_API_KEY=SG...
+# or
+POSTMARK_SERVER_TOKEN=...
+# or
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-password
+```
 
+### Configuration Schema
 
-await sendEmail({
-  to: "example@example.com",
-  template: "myMailTemplate",
-  locale: "de",
-  context: {
-    // ...
-  },
-});
-Previous
+**File**: `api-main/app/core/config.py`
 
-Accessing stored files
+```python
+class Settings(BaseSettings):
+    # Email settings
+    email_provider: str = "resend"
+    email_from: str = "hello@example.com"
+    email_reply_to: Optional[str] = None
+    
+    # Provider credentials
+    resend_api_key: Optional[str] = None
+    sendgrid_api_key: Optional[str] = None
+    postmark_server_token: Optional[str] = None
+    
+    # SMTP settings
+    smtp_host: Optional[str] = None
+    smtp_port: int = 587
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+    smtp_use_tls: bool = True
+    
+    class Config:
+        env_file = ".env"
+```
 
-Next
+## Using Email Service
 
-Plunk
+### Send Welcome Email
 
-© 2025 supastarter. All rights reserved.
+```python
+from app.services.email import email_service
 
-Featured on Startup Fame
+@router.post("/users/signup")
+async def signup(user_data: UserCreate):
+    # Create user logic...
+    
+    # Send welcome email
+    await email_service.send_email(
+        to=user.email,
+        template="welcome",
+        context={
+            "name": user.name,
+            "app_name": settings.APP_NAME,
+            "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
+            "company_name": settings.COMPANY_NAME,
+            "logo_url": f"{settings.FRONTEND_URL}/logo.png",
+            "unsubscribe_url": f"{settings.FRONTEND_URL}/unsubscribe",
+            "privacy_url": f"{settings.FRONTEND_URL}/privacy"
+        }
+    )
+    
+    return {"message": "User created"}
+```
 
+### Send Password Reset Email
 
+```python
+@router.post("/auth/forgot-password")
+async def forgot_password(email: str):
+    # Generate reset token...
+    
+    await email_service.send_email(
+        to=email,
+        template="password_reset",
+        context={
+            "reset_url": f"{settings.FRONTEND_URL}/reset-password?token={token}",
+            "expires_in": "1 hour"
+        }
+    )
+    
+    return {"message": "Reset email sent"}
+```
 
+## Localized Emails
 
+### Multi-language Support
+
+```python
+async def send_localized_email(
+    to: str,
+    template: str,
+    context: Dict,
+    locale: str = "en"
+):
+    """Send email in user's language."""
+    
+    # Use localized template
+    template_name = f"{template}_{locale}"
+    
+    # Add locale to context
+    context["locale"] = locale
+    
+    # Load translations
+    translations = load_translations(locale)
+    context.update(translations)
+    
+    await email_service.send_email(
+        to=to,
+        template=template_name,
+        context=context
+    )
+```
+
+## Testing Emails
+
+### Development Email Preview
+
+```python
+# api-main/scripts/preview_emails.py
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+
+app = FastAPI()
+
+@app.get("/preview/{template}")
+async def preview_email(template: str):
+    """Preview email template in browser."""
+    
+    from app.services.email import email_service
+    
+    # Sample context
+    context = {
+        "name": "John Doe",
+        "app_name": "Supastarter",
+        # ... other context
+    }
+    
+    template_obj = email_service.template_env.get_template(f"{template}.html")
+    html = template_obj.render(**context)
+    
+    return HTMLResponse(html)
+
+# Run with: uvicorn scripts.preview_emails:app --reload
+# Access at: http://localhost:8000/preview/welcome
+```
+
+## Available Providers
+
+### [Resend](Resend.md)
+Production-ready email delivery with great developer experience and reliable infrastructure.
+
+### [Plunk](Plunk.md)
+Simple email marketing and transactional emails with built-in analytics and automation features.
+
+### [Postmark](Postmark.md)
+Fast and reliable transactional email service with excellent deliverability and detailed analytics.
+
+### [Custom Provider](Custom_provider.md)
+Learn how to implement your own email provider to integrate with any email service.
+
+## Best Practices
+
+- Use templates for consistent branding
+- Implement retry logic for failed sends
+- Monitor email deliverability rates
+- Test emails across different clients
+- Handle bounces and unsubscribes properly
+- Log email sending for debugging
+- Use appropriate rate limiting

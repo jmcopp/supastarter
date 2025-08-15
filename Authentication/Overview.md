@@ -133,7 +133,7 @@ current_user_context: contextvars.ContextVar[Optional[Dict[str, Any]]] =
 
 ## Migration Guide
 
-If migrating from `better-auth` or other systems:
+If migrating from `Supabase Auth` or other systems:
 
 1. **User Data Migration**: Export existing users to Supabase auth.users table
 2. **Token Update**: Replace existing JWT handling with Supabase tokens
@@ -141,18 +141,3 @@ If migrating from `better-auth` or other systems:
 4. **API Updates**: Update all protected routes to use hybrid auth system
 
 See the full implementation in the Authentication section guides.
-Previous
-
-OpenAPI documentation
-
-Next
-
-User and session
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

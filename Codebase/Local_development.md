@@ -1,19 +1,23 @@
-Local Development
+# Local Development
+
 Learn how to set up your local development environment for Supastarter
 
 This guide will help you set up your local development environment for Supastarter, including the necessary services like PostgreSQL and MinIO S3 storage.
 
-Prerequisites
+## Prerequisites
+
 To run the application locally, you need to have the following:
 
-Docker and Docker Compose
-Node.js (v18 or later)
-pnpm
-Setting Up Local Services
+- Docker and Docker Compose
+- Node.js (v18 or later)
+- pnpm
+
+## Setting Up Local Services
 Create a docker-compose.yml file in your project root with the following configuration:
 
-docker-compose.yml
+`docker-compose.yml`
 
+```yaml
 version: '3.8'
  
 services:
@@ -134,18 +138,3 @@ Additional Resources
 Docker Compose Documentation
 PostgreSQL Documentation
 MinIO Documentation
-Previous
-
-Dependabot updates in Github
-
-Next
-
-Overview
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

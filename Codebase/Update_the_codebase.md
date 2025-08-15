@@ -16,19 +16,3 @@ Update your repository from the supastarter repository
 
 git pull upstream main --allow-unrelated-histories --rebase
 If you have any merge conflicts, you will have to resolve them manually. If you are not sure how to do this, please refer to the Git documentation.
-
-Previous
-
-VS Code setup
-
-Next
-
-Manage dependencies
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

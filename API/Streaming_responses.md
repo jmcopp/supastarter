@@ -1,10 +1,12 @@
-Streaming responses
+# Streaming Responses
+
 Learn how to stream responses from your API.
 
 As supastarter integrates FastAPI as the API framework, you can easily stream responses from the API which is useful if you are working with AI providers.
 
-Streaming with the API
-With AI SDK and Streaming
+## Streaming with the API
+
+### With AI SDK and Streaming
 When working with AI providers, you can use FastAPI's streaming response capability:
 
 ```python
@@ -32,7 +34,8 @@ async def chat_response(messages: list, current_user: User = Depends(get_current
     )
 ```
 
-With FastAPI Streaming
+### With FastAPI Streaming
+
 If you want to stream any data from your API, you can use FastAPI's StreamingResponse:
 
 ```python
@@ -52,19 +55,3 @@ async def stream_data():
 ```
 
 To learn more about streaming with FastAPI, you can read the FastAPI documentation.
-
-Previous
-
-Use locale in API endpoints
-
-Next
-
-OpenAPI documentation
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

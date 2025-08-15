@@ -55,18 +55,3 @@ To create an invite-only organization setup, disable user signup:
 # In your .env file
 AUTH_ENABLE_SIGNUP=false
 ```
-Previous
-
-Overview
-
-Next
-
-Use organizations in your application
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

@@ -671,19 +671,3 @@ engine = create_engine(
 ```
 
 This SQLModel approach provides type safety, automatic RLS enforcement, and seamless integration with Supabase while maintaining high performance through proper session management and error handling.
-
-Previous
-
-Overview
-
-Next
-
-Use database studio
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

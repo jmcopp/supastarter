@@ -22,9 +22,9 @@ Ensure your project follows the multi-container structure:
 mkdir -p frontend api-main shared scripts
 
 # Move existing files
-mv apps/web/* frontend/
+mv frontend/* frontend/
 mv packages/api/* api-main/
-mv packages/database/models shared/schemas/
+mv api-main/app/models/models shared/schemas/
 ```
 
 ## Step 2: Configure Container Applications
@@ -387,14 +387,3 @@ After successful deployment:
 4. **[Scale based on metrics](https://fly.io/docs/scaling/)** as your app grows
 
 Your supastarter application is now running with enterprise-grade security, auto-scaling, and cost optimization on Fly.io's global infrastructure.
-
----
-
-**Previous**: [Docker Deployment](Docker.md)  
-**Next**: [Monitoring Setup](../Monitoring/Overview.md)
-
-© 2025 supastarter. All rights reserved.
-
-
-
-

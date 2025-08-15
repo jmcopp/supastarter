@@ -339,19 +339,3 @@ async def create_admin():
 - Verify API_URL is accessible
 
 Your supastarter application is now ready for development! 🚀
-
-Previous
-
-Tech Stack
-
-Next
-
-Configuration
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

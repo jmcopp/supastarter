@@ -190,19 +190,3 @@ export function DocumentUpload() {
 	);
 }
 Now your users can use the upload component to upload files to the documents bucket. In the next step you can learn how to access the uploaded files.
-
-Previous
-
-Connect to S3 storage
-
-Next
-
-Accessing stored files
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

@@ -149,18 +149,3 @@ async def proxy_file(
     
     raise HTTPException(status_code=404, detail="Not found")
 ```
-Previous
-
-Uploading files
-
-Next
-
-Overview
-
-© 2025 supastarter. All rights reserved.
-
-Featured on Startup Fame
-
-
-
-

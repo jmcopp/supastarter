@@ -7,11 +7,11 @@ Learn how to integrate Supabase with supastarter's multi-container architecture.
 This guide shows you how to set up Supabase as the complete backend infrastructure for supastarter:
 
 - **Database**: PostgreSQL with Row Level Security (RLS)
-- **Authentication**: Supabase Auth with JWT tokens (replaces better-auth)
+- **Authentication**: Supabase Auth with JWT tokens (replaces Supabase Auth)
 - **Storage**: S3-compatible file storage
 - **Real-time**: WebSocket subscriptions for live data
 
-**Key Change**: Unlike the previous setup, supastarter now uses **Supabase Auth directly** instead of better-auth, enabling seamless RLS integration and simplified architecture.
+**Key Change**: Unlike the previous setup, supastarter now uses **Supabase Auth directly** instead of Supabase Auth, enabling seamless RLS integration and simplified architecture.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ This guide shows you how to set up Supabase as the complete backend infrastructu
 
 ### Database Connection Strings
 In the Supabase dashboard:
-1. Click **Connect** → **ORM** tab → **Prisma**
+1. Click **Connect** → **ORM** tab → **SQLModel**
 2. Copy both `DATABASE_URL` and `DIRECT_URL`
 
 ### Authentication Credentials
@@ -270,14 +270,3 @@ For production deployment on Fly.io, see the [Fly.io Deployment Guide](../Deploy
 - Confirm IP restrictions allow your deployment
 
 Your supastarter application is now fully integrated with Supabase's authentication, database, and storage services!
-
----
-
-**Previous**: [Database Overview](Overview.md)  
-**Next**: [Use Database Client](Use_database_client.md)
-
-© 2025 supastarter. All rights reserved.
-
-
-
-
