@@ -96,8 +96,6 @@ supastarter has defined a few placeholder pages for legal pages, like privacy po
 
 Common legal pages are:
 
-Privacy policy
-Terms of service
 Cookie policy
 Imprint
 Create the legal pages that make sense for your kind of application.
@@ -147,29 +145,4 @@ Featured on Startup Fame
 
 
 
-Blog
-Documentation
-Demo
-Tools
-SaaS ideas generator
-Best SaaS ideas 2025
-Boilerplates and Stacks
-Showcase
-Changelog
-Roadmap
-Become an affiliate
-Privacy policy
-Terms of service
-Acceptable use
-Disclaimer
-License
-Next.js SaaS starter kit
-Next.js SaaS boilerplate
-Nuxt SaaS starter kit
-Next.js SaaS boilerplate
-Nuxt SaaS boilerplate
-SvelteKit SaaS starter kit
-Next.js starter template
-Nuxt starter template
-SvelteKit starter template
 
