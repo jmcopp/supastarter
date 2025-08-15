@@ -1,252 +1,634 @@
-Configuration
-Learn how to configure your supastarter application.
+# Configuration
 
-supastarter is a highly flexible and customizable starter kit and allow you to configure the project to your needs. You can find the main config file in the config/index.ts file in the repository.
+Learn how to configure your supastarter multi-container architecture.
 
-This section will cover all configuration options and when to use them.
+## Overview
 
-Config file
-You can find the configuration object in the config/index.ts file in the repository.
+Supastarter's configuration system supports the multi-container deployment with environment-specific settings for:
 
+- **Frontend Container**: Next.js configuration and environment variables
+- **API Container**: FastAPI settings and Supabase integration
+- **Development**: Local development with hot reloading
+- **Production**: Optimized deployment on Fly.io
 
+## Configuration Architecture
+
+### Environment-Based Configuration
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Configuration Layers                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  Frontend Config          API Config           Shared        │
+│  ┌────────────────┐   ┌────────────────┐   ┌──────────────┐ │
+│  │ .env.local       │   │ api-main/.env   │   │ Fly.io       │ │
+│  │ next.config.js   │   │ settings.py     │   │ secrets      │ │
+│  │ config/index.ts  │   │ main.py         │   │              │ │
+│  └────────────────┘   └────────────────┘   └──────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Frontend Configuration
+
+### Main Config File
+
+**File**: `frontend/config/index.ts`
+
+```typescript
 export const config = {
-    // Internationalization
-	i18n: {
-        // Whether internationalization should be enabled (if disabled, you still need to define the locale you want to use below and set it as the default locale)
-		enabled: true,
-        // Define all locales here that should be available in the app
-        // You need to define a label that is shown in the language selector and a currency that should be used for pricing with this locale
-		locales: {
-			en: {
-				currency: "USD",
-				label: "English",
-			},
-			de: {
-				currency: "USD",
-				label: "Deutsch",
-			},
-		},
-        // The default locale is used if no locale is provided
-		defaultLocale: "en",
-        // The default currency is used for pricing if no currency is provided
-		defaultCurrency: "USD",
-        // The name of the cookie that is used to determine the locale
-		localeCookieName: "NEXT_LOCALE",
-	},
-    // Organizations
-	organizations: {
-        // Whether organizations are enabled in general
-		enable: true,
-        // Whether billing for organizations should be enabled (below you can enable it for users instead)
-		enableBilling: true,
-        // Whether the organization should be hidden from the user (use this for multi-tenant applications)
-		hideOrganization: false,
-        // Should users be able to create new organizations? Otherwise only admin users can create them
-		enableUsersToCreateOrganizations: true,
-        // Whether users should be required to be in an organization. This will redirect users to the organization page after sign in
-		requireOrganization: false,
-        // These colors are used for placeholder avatar if the organization has no logo uploaded
-		avatarColors: ["#4e6df5", "#e5a158", "#9dbee5", "#ced3d9"],
-        // Define forbidden organization slugs. Make sure to add all paths that you define as a route after /app/... to avoid routing issues
-		forbiddenOrganizationSlugs: [
-			"new-organization",
-			"admin",
-			"settings",
-			"ai-demo",
-		],
-	},
-    // Users
-	users: {
-        // Whether billing should be enabled for users (above you can enable it for organizations instead)
-		enableBilling: true,
-        // Whether you want the user to go through an onboarding form after signup (can be defined in the OnboardingForm.tsx)
-		enableOnboarding: false,
-	},
-    // Authentication
-	auth: {
-        // Whether users should be able to create accounts (otherwise users can only be by admins)
-		enableSignup: true,
-  // Whether users should be able to sign in with a magic link
-        enableMagicLink: true,
-  // Whether users should be able to sign in with a social provider
-		enableSocialLogin: true,
-  // Whether users should be able to sign in with a passkey
-		enablePasskeys: true,
-  // Whether users should be able to sign in with a password
-		enablePasswordLogin: true,
-        // where users should be redirected after the sign in
-		redirectAfterSignIn: "/app",
-        // where users should be redirected after logout
-		redirectAfterLogout: "/",
-        // how long a session should be valid
-		sessionCookieMaxAge: 60 * 60 * 24 * 30,
-	},
-    // Mails
-	mails: {
-        // the from address for mails
-		from: "hello@your-domain.com",
-	},
-    // Frontend
-	ui: {
-        // the themes that should be available in the app
-		enabledThemes: ["light", "dark"],
-        // the default theme
-		defaultTheme: "light",
-        // the saas part of the application
-		saas: {
-            // whether the saas part should be enabled (otherwise all routes will be redirect to the marketing page)
-			enabled: true,
-            // whether the sidebar layout should be used
-			useSidebarLayout: true,
-		},
-        // the marketing part of the application
-		marketing: {
-            // whether the marketing features should be enabled (otherwise all routes will be redirect to the saas part)
-			enabled: true,
-		},
-	},
-    // Storage
-	storage: {
-        // define the name of the buckets for the different types of files
-		bucketNames: {
-			avatars: process.env.NEXT_PUBLIC_AVATARS_BUCKET_NAME ?? "avatars",
-		},
-	},
-    // Contact form
-    contactForm: {
-        // whether the contact form should be enabled
-        enabled: true,
-        // the email address to which the contact form should be sent
-        to: "hello@your-domain.com",
-        // the subject of the email
-        subject: "New contact form submission",
+  // Application info
+  app: {
+    name: "Supastarter",
+    description: "Full-stack application template",
+    url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    apiUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+  },
+
+  // Multi-container architecture
+  architecture: {
+    frontend: {
+      port: 3000,
+      minInstances: 1,  // Always keep 1 instance running
+      autoSuspend: true,
     },
-    // Payments
-	payments: {
-        // define the products that should be available in the checkout
-        // read the payments documentation for more information on how to define plans
-		plans: {
-            // ...
-		},
-	},
-};
-Use cases
-The configuration options enable you to set up lots of different use cases. Here are some examples:
-
-Deploy marketing page only
-If you want to deploy the marketing page only, you can set the ui.saas.enabled option to false. This will disable the saas part of the application and redirect requests to the marketing page.
-
-
-export const config = {
-    // ...
-    ui: {
-        saas: {
-            enabled: false,
-        },
+    api: {
+      port: 8000,
+      minInstances: 0,  // Scale to zero
+      autoSuspend: true,
+      healthCheckPath: "/health",
     },
-};
-To not have to manually set this option while developing locally, you can define an environment variable NEXT_PUBLIC_SAAS_ENABLED in your .env file and use this in the file file.
+  },
 
-
-export const config = {
-    // ...
-    ui: {
-        saas: {
-            enabled: process.env.NEXT_PUBLIC_SAAS_ENABLED === "true",
-        },
-    },
-};
-This way you can set the deployed version to false while enabling the development version to true.
-
-Disable marketing page
-If you want to ship the marketing page separately and just use the SaaS part of supastarter, you can simply disable the marketing part of the application. This will redirect all requests to the SaaS part or the login page if the user is not authenticated.
-
-
-export const config = {
-    // ...
-    ui: {
-        marketing: {
-            enabled: false,
-        },
-    },
-};
-Multi-tenant application
-If you want to use supastarter as a multi-tenant application, you can use the following configuration. This will
-
-require users to be in an organization
-hide the organization from the user
-redirect users to the organization page after sign in
-
-export const config = {
-    // ...
-    organizations: {
-        hideOrganization: true,
-        requireOrganization: true,
-        enableUsersToCreateOrganizations: false,
-    },
-};
-With this setup, you can have two different behaviors for creating organizations.
-
-Users can create an initial organizations (and no further)
-Only admins can create organizations
-To enable the second behavior, you can set the auth.enableSignup option to false. This way users can only join if they are invited to an organization and organizations can only be created by admins.
-
-
-export const config = {
-    // ...
+  // Supabase integration
+  supabase: {
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    // Auth configuration
     auth: {
-        enableSignup: false,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce', // Recommended for web apps
     },
+  },
+
+  // Authentication settings
+  auth: {
+    enableSignup: true,
+    enableMagicLink: true,
+    enableSocialLogin: true,
+    enablePasswordLogin: true,
+    redirectAfterSignIn: "/app",
+    redirectAfterLogout: "/",
+    
+    // Social providers (configured in Supabase)
+    socialProviders: [
+      { name: 'google', enabled: true },
+      { name: 'github', enabled: true },
+      { name: 'discord', enabled: false },
+    ],
+  },
+
+  // Internationalization
+  i18n: {
+    enabled: true,
+    locales: {
+      en: {
+        currency: "USD",
+        label: "English",
+        flag: "🇺🇸"
+      },
+      de: {
+        currency: "EUR",
+        label: "Deutsch",
+        flag: "🇩🇪"
+      },
+      es: {
+        currency: "EUR",
+        label: "Español",
+        flag: "🇪🇸"
+      }
+    },
+    defaultLocale: "en",
+    defaultCurrency: "USD",
+    localeCookieName: "NEXT_LOCALE",
+  },
+
+  // Organizations
+  organizations: {
+    enabled: true,
+    enableBilling: true,
+    hideOrganization: false,
+    enableUsersToCreateOrganizations: true,
+    requireOrganization: false,
+    maxMembersPerOrganization: 50,
+    avatarColors: ["#4e6df5", "#e5a158", "#9dbee5", "#ced3d9"],
+    forbiddenSlugs: [
+      "api", "admin", "www", "mail", "ftp", "localhost", "staging",
+      "new-organization", "settings", "billing", "support"
+    ],
+  },
+
+  // User management
+  users: {
+    enableBilling: false, // Use organization billing instead
+    enableOnboarding: true,
+    profilePictureUpload: true,
+    allowAccountDeletion: true,
+    roles: {
+      admin: { permissions: ['*'] },
+      user: { permissions: ['read:own', 'write:own'] },
+      premium: { permissions: ['read:own', 'write:own', 'premium:features'] }
+    }
+  },
+
+  // UI & UX
+  ui: {
+    enabledThemes: ["light", "dark", "system"],
+    defaultTheme: "system",
+    saas: {
+      enabled: true,
+      useSidebarLayout: true,
+      enableSearch: true,
+      enableNotifications: true,
+    },
+    marketing: {
+      enabled: true,
+      showPricing: true,
+      showTestimonials: true,
+      showFAQ: true,
+    },
+  },
+
+  // File storage
+  storage: {
+    provider: "supabase", // or "s3", "cloudinary"
+    buckets: {
+      avatars: "avatars",
+      documents: "documents",
+      uploads: "uploads"
+    },
+    maxFileSize: 10 * 1024 * 1024, // 10MB
+    allowedFileTypes: {
+      images: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+      documents: ['pdf', 'doc', 'docx', 'txt'],
+    }
+  },
+
+  // Email configuration
+  email: {
+    from: "hello@yourdomain.com",
+    replyTo: "support@yourdomain.com",
+    provider: "resend", // or "postmark", "sendgrid"
+    templates: {
+      welcome: "welcome-template",
+      passwordReset: "password-reset-template",
+      invitation: "invitation-template"
+    }
+  },
+
+  // Contact form
+  contactForm: {
+    enabled: true,
+    to: "hello@yourdomain.com",
+    subject: "New contact form submission",
+    enableFileAttachments: false,
+  },
+
+  // Payment configuration
+  payments: {
+    enabled: true,
+    provider: "stripe", // or "lemonsqueezy", "paddle"
+    mode: process.env.NODE_ENV === "production" ? "live" : "test",
+    currency: "USD",
+    
+    plans: {
+      starter: {
+        name: "Starter",
+        price: 0,
+        interval: "month",
+        features: ["Up to 3 projects", "Basic support"]
+      },
+      pro: {
+        name: "Pro",
+        price: 29,
+        interval: "month",
+        features: ["Unlimited projects", "Priority support", "Advanced features"]
+      },
+      enterprise: {
+        name: "Enterprise",
+        price: 99,
+        interval: "month",
+        features: ["Everything in Pro", "Custom integrations", "Dedicated support"]
+      }
+    }
+  },
+
+  // Feature flags
+  features: {
+    enableAnalytics: true,
+    enableChat: false,
+    enableAI: false,
+    enableNotifications: true,
+    enableSearch: true,
+    enableDarkMode: true,
+  },
+
+  // Security
+  security: {
+    enableCSRF: true,
+    enableRateLimiting: true,
+    maxRequestsPerMinute: 100,
+    sessionTimeout: 60 * 60 * 24 * 7, // 7 days
+  },
 };
-Enable/disable onboarding
-There is a prepared onboarding form, which allows users to set up their profile after sign up. If you want to disable it, you can set the users.enableOnboarding option to false.
 
+// Type-safe config access
+export type Config = typeof config;
+```
+## Backend Configuration
 
+### FastAPI Settings
+
+**File**: `api-main/app/core/config.py`
+
+```python
+from pydantic_settings import BaseSettings
+from typing import List, Optional
+import os
+
+class Settings(BaseSettings):
+    # Application
+    app_name: str = "Supastarter API"
+    app_version: str = "1.0.0"
+    debug: bool = False
+    environment: str = "development"
+    
+    # Database
+    database_url: str
+    direct_url: Optional[str] = None
+    
+    # Supabase
+    supabase_url: str
+    supabase_service_key: str
+    supabase_jwt_secret: str
+    use_supabase_auth: bool = True
+    
+    # Security
+    secret_key: str = "your-secret-key"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 1440  # 24 hours
+    
+    # CORS
+    allowed_origins: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://yourdomain.com"
+    ]
+    
+    # Rate limiting
+    rate_limit_requests: int = 100
+    rate_limit_window: int = 60  # seconds
+    
+    # Email
+    email_provider: str = "resend"
+    resend_api_key: Optional[str] = None
+    postmark_server_token: Optional[str] = None
+    sendgrid_api_key: Optional[str] = None
+    email_from: str = "hello@yourdomain.com"
+    
+    # Storage
+    s3_access_key_id: Optional[str] = None
+    s3_secret_access_key: Optional[str] = None
+    s3_endpoint: Optional[str] = None
+    s3_bucket_name: str = "avatars"
+    
+    # Payments
+    stripe_secret_key: Optional[str] = None
+    stripe_publishable_key: Optional[str] = None
+    stripe_webhook_secret: Optional[str] = None
+    
+    # Monitoring
+    sentry_dsn: Optional[str] = None
+    enable_logging: bool = True
+    log_level: str = "INFO"
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = False
+
+# Global settings instance
+settings = Settings()
+
+# Environment-specific configurations
+class DevelopmentSettings(Settings):
+    debug: bool = True
+    log_level: str = "DEBUG"
+    environment: str = "development"
+
+class ProductionSettings(Settings):
+    debug: bool = False
+    log_level: str = "WARNING"
+    environment: str = "production"
+
+class TestSettings(Settings):
+    debug: bool = True
+    environment: str = "test"
+    database_url: str = "sqlite:///./test.db"
+
+# Factory function
+def get_settings() -> Settings:
+    env = os.getenv("ENVIRONMENT", "development")
+    
+    if env == "production":
+        return ProductionSettings()
+    elif env == "test":
+        return TestSettings()
+    else:
+        return DevelopmentSettings()
+
+settings = get_settings()
+```
+
+## Environment Variables
+
+### Development Environment
+
+**File**: `.env.local` (Frontend)
+```bash
+# Application
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+
+# Features
+NEXT_PUBLIC_SAAS_ENABLED=true
+NEXT_PUBLIC_MARKETING_ENABLED=true
+NEXT_PUBLIC_ANALYTICS_ENABLED=false
+
+# Payments
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
+
+**File**: `api-main/.env` (Backend)
+```bash
+# Environment
+ENVIRONMENT=development
+DEBUG=true
+
+# Database
+DATABASE_URL=postgresql://postgres:[password]@db.[project].supabase.co:6543/postgres?pgbouncer=true
+DIRECT_URL=postgresql://postgres:[password]@db.[project].supabase.co:5432/postgres
+
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=eyJ...
+SUPABASE_JWT_SECRET=your-jwt-secret
+USE_SUPABASE_AUTH=true
+
+# Email
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=re_...
+EMAIL_FROM=hello@yourdomain.com
+
+# Storage
+S3_ACCESS_KEY_ID=your-access-key
+S3_SECRET_ACCESS_KEY=your-secret
+S3_ENDPOINT=https://[project].supabase.co/storage/v1/s3
+S3_BUCKET_NAME=avatars
+
+# Payments
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+### Production Environment
+
+**Fly.io Secrets** (Set via `fly secrets set`)
+```bash
+# Backend secrets
+SUPABASE_SERVICE_KEY=eyJ...
+SUPABASE_JWT_SECRET=your-jwt-secret
+DATABASE_URL=postgresql://...
+STRIPE_SECRET_KEY=sk_live_...
+RESEND_API_KEY=re_...
+
+# Frontend secrets
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
+```
+
+## Configuration Use Cases
+
+### 1. Marketing-Only Deployment
+
+```typescript
+// Disable SaaS features for marketing site
 export const config = {
-    // ...
-    users: {
-        enableOnboarding: false,
-    },
-};
-Attach billing to users or organizations
-You can attach billing to users or organizations. To enable this for either one, you can set the enableBilling option to true.
+  ui: {
+    saas: { enabled: false },
+    marketing: { enabled: true }
+  },
+  auth: {
+    enableSignup: false // Collect emails only
+  }
+}
+```
 
+### 2. SaaS-Only Deployment
 
+```typescript
+// Disable marketing for app-only deployment
 export const config = {
-    // for users
-    users: {
-        enableBilling: true,
-    },
-    // for organizations
-    organizations: {
-        enableBilling: true,
-    },
-};
-In theory, you can have both enabled at the same time, but for most use cases you want to attach it to only one of them.
+  ui: {
+    saas: { enabled: true },
+    marketing: { enabled: false }
+  },
+  auth: {
+    redirectAfterSignIn: "/dashboard",
+    redirectAfterLogout: "/login"
+  }
+}
+```
 
-Disable organizations
-If you don't want to use organizations, you can set the organizations.enable option to false. This will disable the organizations feature totally.
+### 3. Multi-Tenant Application
 
-
+```typescript
 export const config = {
-    // ...
-    organizations: {
-        enable: false,
-    },
-};
-Customize authentication
-You can easily (de)activate authentication methods like social login, passkeys, password login and magic links.
+  organizations: {
+    enabled: true,
+    requireOrganization: true,
+    hideOrganization: true, // Hide org switcher
+    enableUsersToCreateOrganizations: false,
+    maxMembersPerOrganization: 100
+  },
+  auth: {
+    enableSignup: false, // Admin-only user creation
+    redirectAfterSignIn: "/dashboard"
+  },
+  users: {
+    enableBilling: false // Organization-level billing only
+  }
+}
+```
 
+### 4. Single-User Application
 
+```typescript
 export const config = {
-    // ...
-    auth: {
-        enableSocialLogin: false,
-        enablePasskeys: false,
-        enablePasswordLogin: false,
-        enableMagicLink: false,
+  organizations: {
+    enabled: false // Disable organizations completely
+  },
+  users: {
+    enableBilling: true, // User-level billing
+    enableOnboarding: true
+  },
+  ui: {
+    saas: {
+      useSidebarLayout: false // Use top navigation
+    }
+  }
+}
+```
+
+### 5. Enterprise Application
+
+```typescript
+export const config = {
+  auth: {
+    enableSignup: false,
+    enableSocialLogin: false,
+    enablePasswordLogin: true,
+    enableMagicLink: false // Security requirement
+  },
+  security: {
+    sessionTimeout: 60 * 60 * 2, // 2 hours
+    maxRequestsPerMinute: 1000,
+    enableCSRF: true
+  },
+  features: {
+    enableAnalytics: true,
+    enableAuditLogs: true
+  }
+}
+```
+
+### 6. Development vs Production
+
+```typescript
+// Use environment variables for deployment-specific config
+export const config = {
+  ui: {
+    saas: {
+      enabled: process.env.NEXT_PUBLIC_SAAS_ENABLED !== "false"
     },
-};
+    marketing: {
+      enabled: process.env.NEXT_PUBLIC_MARKETING_ENABLED !== "false"
+    }
+  },
+  features: {
+    enableAnalytics: process.env.NODE_ENV === "production",
+    enableDebugMode: process.env.NODE_ENV === "development"
+  }
+}
+```
+
+## Configuration Validation
+
+### Runtime Validation
+
+```typescript
+// frontend/lib/config-validator.ts
+import { z } from 'zod'
+import { config } from '../config'
+
+const ConfigSchema = z.object({
+  app: z.object({
+    name: z.string().min(1),
+    url: z.string().url(),
+    apiUrl: z.string().url()
+  }),
+  supabase: z.object({
+    url: z.string().url(),
+    anonKey: z.string().min(1)
+  }),
+  // ... other validations
+})
+
+export function validateConfig() {
+  try {
+    ConfigSchema.parse(config)
+    console.log('✅ Configuration is valid')
+  } catch (error) {
+    console.error('❌ Configuration validation failed:', error)
+    throw new Error('Invalid configuration')
+  }
+}
+
+// Call during app initialization
+if (process.env.NODE_ENV !== 'production') {
+  validateConfig()
+}
+```
+
+## Container-Specific Configuration
+
+### Frontend Dockerfile Build Args
+
+```dockerfile
+# Frontend Dockerfile
+FROM node:18-alpine AS builder
+
+# Build-time configuration
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
+# Make available to Next.js build
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
+RUN npm run build
+```
+
+### API Container Configuration Loading
+
+```python
+# api-main/app/main.py
+from app.core.config import settings
+from app.core.logging import setup_logging
+
+# Configure based on environment
+if settings.environment == "production":
+    # Production optimizations
+    import uvloop
+    uvloop.install()
+
+# Setup logging
+setup_logging(settings.log_level)
+
+# Configure CORS based on environment
+if settings.debug:
+    allowed_origins = ["*"]
+else:
+    allowed_origins = settings.allowed_origins
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+```
+
+This configuration system provides complete flexibility for different deployment scenarios while maintaining type safety and validation across the multi-container architecture.
 Previous
 
 Setup

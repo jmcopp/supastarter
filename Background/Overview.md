@@ -5,13 +5,19 @@ With every larger application, you'll get to a point where you need to run tasks
 
 There are multiple approaches to implement tasks in your supastarter application.
 
-Serverless environments
-If you deploy your application in a serverless environment, you want to use a third-party service to schedule and trigger your tasks like trigger.dev or upstash:
+Serverless and containerized environments
+If you deploy your FastAPI application in a serverless or containerized environment, you want to use a third-party service to schedule and trigger your tasks like trigger.dev or upstash:
 
 trigger.dev
 Upstash QStash
 Self-hosted environments
-If you have your backend deployed on a long-running server like described in our standalone API documentation, you can also use libraries like bullmq to create and schedule background tasks.
+If you have your FastAPI backend deployed on a long-running server (like with Docker containers on Fly.io or similar), you can also use Python libraries like Celery with Redis/RabbitMQ, or FastAPI-compatible task queues to create and schedule background tasks.
+
+For containerized FastAPI deployments, consider:
+- **Celery**: Distributed task queue for Python with Redis/RabbitMQ
+- **RQ (Redis Queue)**: Simple job queue for Python
+- **FastAPI-Queue**: Lightweight background tasks for FastAPI
+- **APScheduler**: Advanced Python Scheduler for cron-like jobs
 
 Previous
 

@@ -38,93 +38,118 @@ To get the URL for the webhook, you can either use a local development URL or th
 Local development
 If you want to test the webhook locally, you can use ngrok to create a tunnel to your local machine. Ngrok will then give you a URL that you can use to test the webhook locally.
 
-To do so, install ngrok and run it with the following command (while your supastarter development server is running):
+To do so, install ngrok and run it with the following command (while your FastAPI development server is running):
 
+```bash
+ngrok http 8000
+```
 
-ngrok http 3000
-
-
-This will give you a URL (see the Forwarding output) that you can use to create a webhook in Stripe. Just use that url and add /api/webhooks/payments to it.
+This will give you a URL (see the Forwarding output) that you can use to create a webhook in Stripe. Just use that URL and add `/webhooks/stripe` to it.
 
 Production / preview deployment
 When you have already deployed a version of your project, you can use the actual URL to create the webhook with. This will be necessary for a production version your app later anyway.
 
 Make sure you have a deployed version that has the STRIPE_WEBHOOK_SECRET environment variable set.
 
-Then you can use the URL of your deployed app and add /api/webhooks/payments to it.
+Then you can use the URL of your deployed FastAPI app and add `/webhooks/stripe` to it.
 
-Example URL: https://your-app.com/api/webhooks/payments
+Example URL: https://your-api.com/webhooks/stripe
 
 Set up products in app
-The created products have to be defined in the config/index.ts file:
+The created products have to be defined in the FastAPI configuration file:
 
-config/index.ts
+api/app/core/config.py
 
-export const config = {
-  payments: {
-		plans: {
-			free: {
-				isFree: true,
-			},
-			pro: {
-				recommended: true,
-				prices: [
-					{
-						type: "recurring",
-						productId: process.env.NEXT_PUBLIC_PRICE_ID_PRO_MONTHLY as string,
-						interval: "month",
-						amount: 29,
-						currency: "USD",
-						seatBased: true,
-						trialPeriodDays: 7,
-					},
-					{
-						type: "recurring",
-						productId: process.env.NEXT_PUBLIC_PRICE_ID_PRO_YEARLY as string,
-						interval: "year",
-						amount: 290,
-						currency: "USD",
-						seatBased: true,
-						trialPeriodDays: 7,
-					},
-				],
-			},
-		},
-	},
-};
+```python
+from pydantic_settings import BaseSettings
+from typing import Dict, List, Any
+
+class Settings(BaseSettings):
+    # Stripe configuration
+    stripe_secret_key: str
+    stripe_webhook_secret: str
+    
+    # Payment plans configuration
+    payments_plans: Dict[str, Any] = {
+        "free": {
+            "is_free": True,
+        },
+        "pro": {
+            "recommended": True,
+            "prices": [
+                {
+                    "type": "recurring",
+                    "product_id": "",  # Set via environment variable
+                    "interval": "month",
+                    "amount": 29,
+                    "currency": "USD",
+                    "seat_based": True,
+                    "trial_period_days": 7,
+                },
+                {
+                    "type": "recurring",
+                    "product_id": "",  # Set via environment variable  
+                    "interval": "year",
+                    "amount": 290,
+                    "currency": "USD",
+                    "seat_based": True,
+                    "trial_period_days": 7,
+                },
+            ],
+        },
+    }
+    
+    # Price IDs from environment
+    price_id_pro_monthly: str = ""
+    price_id_pro_yearly: str = ""
+    
+    class Config:
+        env_file = ".env"
+
+settings = Settings()
+
+# Update the plans with actual price IDs
+if settings.price_id_pro_monthly:
+    settings.payments_plans["pro"]["prices"][0]["product_id"] = settings.price_id_pro_monthly
+if settings.price_id_pro_yearly:
+    settings.payments_plans["pro"]["prices"][1]["product_id"] = settings.price_id_pro_yearly
+```
 We are using envs for the product ids, so you can define different product ids for each environment, as you probably want to use the test mode for development.
 
-Define the product ids in your .env.local and in the environment variables of your production environment:
+Define the product ids in your .env file and in the environment variables of your production environment:
 
-.env.local
+.env
 
-NEXT_PUBLIC_PRICE_ID_PRO_MONTHLY=""
-NEXT_PUBLIC_PRICE_ID_PRO_YEARLY=""
+```bash
+PRICE_ID_PRO_MONTHLY=""
+PRICE_ID_PRO_YEARLY=""
+```
 Learn more about the payment plans configuration in Manage plans and products documentation.
 
 Set currency for locales in your app
 Lastly you need to configure the currency that should be used for each locale in your app.
 
-You can do this by setting the currency property for each locale in the config file.
+You can do this by setting the currency property for each locale in the FastAPI configuration file.
 
-config/index.ts
-
-export const config = {
-  i18n: {
-    // ...
-    locales: {
-      en: {
-        currency: "USD",
-        language: "en",
-      },
-      de: {
-        currency: "EUR",
-        language: "de",
-      },
-    },
-  },
-  // ...
-};
+```python
+class Settings(BaseSettings):
+    # ... other settings
+    
+    # Internationalization configuration
+    i18n_locales: Dict[str, Dict[str, str]] = {
+        "en": {
+            "currency": "USD",
+            "language": "en",
+        },
+        "de": {
+            "currency": "EUR", 
+            "language": "de",
+        },
+    }
+    
+    class Config:
+        env_file = ".env"
+```
 Previous
 
 Overview

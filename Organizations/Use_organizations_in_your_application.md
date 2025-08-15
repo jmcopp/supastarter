@@ -64,26 +64,59 @@ In some cases you want to get organization data without a slug being present in 
 
 In general the user can access the organization data for the organizations they are a member of.
 
-To get the organization data for a specific organization, you can use the authClient on client side:
+To get the organization data for a specific organization, you can call the FastAPI endpoint:
 
+**Client side:**
+```tsx
+const getOrganization = async (organizationId: string) => {
+    const response = await fetch(`/api/organizations/${organizationId}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}` // Use your auth token here
+        }
+    });
 
-const { data, error } = await authClient.organization.getFullOrganization(
-	{
-		query: {
-			organizationId: '1234lasjdfwlj34l', // replace with the organization id
-		},
-	},
-);
-On server side you can use the auth class to get the organization data. Make sure to pass the headers to the request, as the cookies are not automatically attached to the request.
+    if (!response.ok) {
+        throw new Error('Failed to fetch organization');
+    }
 
+    return response.json();
+};
+```
 
-const organization = await auth.api.getFullOrganization({
-	headers: await headers(),
-	query: {
-		organizationId: '1234lasjdfwlj34l', // replace with the organization id
-	},
-});
-To learn more about how to use organizations, please refer to the better-auth documentation.
+**Server side (FastAPI endpoint):**
+```python
+@router.get("/{organization_id}", response_model=OrganizationResponse)
+async def get_organization(
+    organization_id: str,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    """
+    Get organization data for a specific organization.
+    User must be a member of the organization.
+    """
+    
+    # Verify user is a member of the organization
+    membership_query = select(OrganizationMember).where(
+        OrganizationMember.organization_id == organization_id,
+        OrganizationMember.user_id == current_user.id
+    )
+    membership = session.exec(membership_query).first()
+    
+    if not membership:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    org_query = select(Organization).where(Organization.id == organization_id)
+    organization = session.exec(org_query).first()
+    
+    if not organization:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    
+    return organization
+```
+
+To learn more about how to use organizations with Supabase Auth, please refer to the Supabase documentation and the Authentication section of this guide.
 
 Previous
 

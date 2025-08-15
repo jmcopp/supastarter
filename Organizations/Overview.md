@@ -1,9 +1,9 @@
 Overview
 Learn how organizations work in supastarter.
 
-Organizations are a way to to share data between users. Organizations can have members with different roles and permissions.
+Organizations are a way to share data between users. Organizations can have members with different roles and permissions.
 
-In supastarter organizations are also handled by better-auth and therefore you also have full control over the organization management and all data is stored in the database.
+In supastarter organizations are managed through Supabase Auth combined with custom database models using SQLModel. This provides full control over organization management with all data stored securely in your Supabase database with Row Level Security (RLS) policies.
 
 Configure organizations
 Use organizations in your application
