@@ -5,69 +5,125 @@ With supastarter you can choose between Prisma and Drizzle as your database ORM.
 
 You can find the schema and configuration in the packages/database directory either in the prisma or drizzle folder.
 
-Update schema
-Use database client
-Use database studio
-Configure the ORM
-Prisma
-You can skip this if you are using Prisma with PostgreSQL, as this is the default setup.
+## Database Components
 
-If you are using a different database than PostgreSQL, you will need to configure the database provider in the /packages/database/prisma/schema.prisma file.
+### [Schema Management](Update_schema_&_migrate_changes.md)
+Learn how to update database schemas using SQLModel and Alembic migrations with Supabase integration.
 
-packages/database/prisma/schema.prisma
+### [Database Client Usage](Use_database_client.md)
+How to use the SQLModel database client with user context isolation and RLS policies.
 
-datasource db {
-  provider = "mysql" // or "mongodb"
-}
-You will also need to change the database provider in the /packages/auth/auth.ts file:
+### [Database Studio](Use_database_studio.md)
+Access the Supabase Studio for visual database management, query building, and real-time data viewing.
 
-packages/auth/auth.ts
+### [Supabase Setup](Supabase_setup.md)
+Complete setup guide for integrating Supabase with supastarter's multi-container architecture.
 
-export const auth = betterAuth({
-	database: prismaAdapter(db, {
-		provider: "mysql", // or "mongodb"
-	}),
-});
-In case you are using MySQL, you will also need to remove all occurrences of mode: "insensitive" from the project. This is a feature that Prisma does not support for MySQL, so it will cause errors on build. Simply search in the project for mode: "insensitive" and remove it.
+## Security Model
 
-Drizzle
-If you want to use Drizzle instead of Prisma, you will need to change the export in the /packages/database/index.ts file:
+### User Context Isolation
+```python
+# api-main/app/models/base.py
+from sqlmodel import Field, SQLModel
+from datetime import datetime
+import uuid
 
-packages/database/index.ts
+class TimestampMixin(SQLModel):
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-export * from "./drizzle";
-Next make sure to use the drizzle adapter in the /packages/auth/auth.ts file:
+class UserOwnedMixin(SQLModel):
+    owner_id: uuid.UUID = Field(
+        foreign_key="auth.users.id", 
+        nullable=False, 
+        index=True
+    )
+```
 
-packages/auth/auth.ts
+### Automatic RLS Enforcement
+All database operations automatically respect RLS policies:
+```python
+# User context is automatically applied
+async def get_user_items(user_id: str, db: AsyncSession):
+    # RLS ensures only user's items are returned
+    items = await db.exec(select(Item)).all()
+    return items
+```
 
-export const auth = betterAuth({
-	database: drizzleAdapter(db, {
-		provider: "mysql", // or "sqlite" or "pg"
-	}),
-});
-If you are using a different database than PostgreSQL, you will need to export the schema for either mysql or sqlite from the /packages/database/drizzle/schemaindex].ts file.
+### Performance Optimization
+```sql
+-- Optimized indexes for RLS queries
+CREATE INDEX idx_items_owner_created ON public.items(owner_id, created_at DESC);
+CREATE INDEX idx_items_owner_title ON public.items(owner_id, title);
+```
 
-packages/database/drizzle/schema/index.ts
+## Multi-Container Database Access
 
-export * from "./postgres";
-// or export * from "./mysql";
-// or export * from "./sqlite";
-Lastly, you will need to set up the correct database client in the client.ts file. Follow the instructions in the Drizzle documentation for the database provider you are using. For PostgreSQL you can use the following example:
+### API Main Container
+- **Primary database operations** for business logic
+- **User-scoped queries** with automatic RLS
+- **Transaction management** with context isolation
 
-packages/database/drizzle/client.ts
+### Frontend Container
+- **Supabase client** for real-time subscriptions
+- **Direct database access** for read-only operations (optional)
+- **Authentication state** synchronized with backend
 
-import { drizzle } from "drizzle-orm/node-postgres";
-import * as schema from "./schema/postgres";
- 
-const databaseUrl = process.env.DATABASE_URL as string;
- 
-if (!databaseUrl) {
-	throw new Error("DATABASE_URL is not set");
-}
- 
-export const db = drizzle(databaseUrl, {
-	schema,
-});
+## Database Configuration
+
+### Connection Setup
+```python
+# api-main/app/core/database.py
+from sqlmodel import create_engine
+from supabase import create_client
+
+# SQLModel engine for API operations
+engine = create_engine(
+    settings.DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=300,
+)
+
+# Supabase client for real-time features
+supabase = create_client(
+    settings.SUPABASE_URL,
+    settings.SUPABASE_ANON_KEY
+)
+```
+
+### Environment Variables
+```bash
+# Production configuration
+DATABASE_URL=postgresql://...
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_KEY=eyJ...  # Server-side only
+SUPABASE_JWT_SECRET=your-jwt-secret
+```
+
+## Development vs Production
+
+### Development
+- **Local Supabase** instance or development project
+- **Database migrations** applied automatically
+- **Schema validation** on startup
+
+### Production
+- **Hosted Supabase** with connection pooling
+- **Automated backups** and point-in-time recovery
+- **Read replicas** for performance (if needed)
+- **Connection monitoring** and alerting
+
+## Migration from Other ORMs
+
+If migrating from Prisma or Drizzle:
+
+1. **Schema Conversion**: Convert existing models to SQLModel format
+2. **RLS Setup**: Enable and configure Row Level Security
+3. **Data Migration**: Preserve existing data during transition
+4. **Client Updates**: Update all database access to use new patterns
+
+Detailed migration guides are available in each component section.
 Previous
 
 Local Development

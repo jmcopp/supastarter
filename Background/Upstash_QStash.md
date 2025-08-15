@@ -10,133 +10,184 @@ An Upstash account
 A QStash service created in your Upstash dashboard
 Your QStash credentials (URL and token)
 1. Install Dependencies
-First, install the QStash SDK:
+First, install the QStash SDK for Python:
 
-
-pnpm add --filter api @upstash/qstash
+```bash
+pip install qstash-py
+# or add to your requirements.txt
+echo "qstash-py>=1.0.0" >> api/requirements.txt
+```
 2. Environment Variables
-Add the following environment variables to your .env.local file:
+Add the following environment variables to your .env file:
 
-
+```bash
 QSTASH_URL=https://qstash.upstash.io
 QSTASH_TOKEN=your_qstash_token_here
 QSTASH_CURRENT_SIGNING_KEY=your_current_signing_key_here
 QSTASH_NEXT_SIGNING_KEY=your_next_signing_key_here
+```
 You can find these values in your Upstash dashboard under the QStash service.
 
 3. Create the QStash Client
 Create a utility file to initialize the QStash client:
 
-packages/api/src/lib/qstash.ts
+api/app/services/qstash.py
 
-import { Client as QStashClient } from "@upstash/qstash";
- 
-export const qstashClient = new QStashClient({
-	baseUrl: process.env.QSTASH_URL,
-	token: process.env.QSTASH_TOKEN,
-});
+```python
+from qstash import Client
+import os
+from app.core.config import settings
+
+# Initialize QStash client
+qstash_client = Client(
+    token=settings.qstash_token,
+    url=settings.qstash_url
+)
+
+def get_qstash_client() -> Client:
+    """Get the QStash client instance."""
+    return qstash_client
+```
 4. Create a task router
 Create a new router to handle your tasks:
 
-packages/api/src/routes/tasks/router.ts
+api/app/routers/tasks.py
 
-import { Receiver } from "@upstash/qstash";
-import { Hono } from "hono";
-import { createMiddleware } from "hono/factory";
- 
-const qStashVerifyMiddleware = createMiddleware(async (c, next) => {
-	const currentSigningKey = process.env.QSTASH_CURRENT_SIGNING_KEY as string;
-	const nextSigningKey = process.env.QSTASH_NEXT_SIGNING_KEY as string;
- 
-	if (!currentSigningKey || !nextSigningKey) {
-		return c.json({ error: "QStash signing keys not configured" }, 500);
-	}
- 
-	const signature = c.req.header("upstash-signature");
-	const body = await c.req.text();
- 
-	if (!signature) {
-		return c.json({ error: "Missing signature" }, 401);
-	}
- 
-	try {
-		const receiver = new Receiver({
-			currentSigningKey,
-			nextSigningKey,
-		});
- 
-		const isValid = receiver.verify({
-			body,
-			signature,
-		});
- 
-		if (!isValid) {
-			return c.json({ error: "Invalid signature" }, 401);
-		}
- 
-		await next();
-	} catch (error) {
-		console.error("QStash signature verification failed:", error);
-		return c.json({ error: "Invalid signature" }, 401);
-	}
-});
- 
-export const tasksRouter = new Hono()
-	.basePath("/tasks")
-	.use(qStashVerifyMiddleware)
-	.post("/test", async (c) => {
-		const { message } = await c.req.json();
- 
-		console.log(message);
- 
-		return c.json({ message: "Task received" });
-	});
+```python
+from fastapi import APIRouter, HTTPException, Request, Depends
+from qstash import Receiver
+import json
+import logging
+from app.core.config import settings
+
+router = APIRouter(prefix="/tasks", tags=["tasks"])
+logger = logging.getLogger(__name__)
+
+def verify_qstash_signature(request: Request) -> bool:
+    """Verify QStash signature for webhook security."""
+    try:
+        signature = request.headers.get("upstash-signature")
+        if not signature:
+            raise HTTPException(status_code=401, detail="Missing signature")
+        
+        # Note: You'll need to implement signature verification based on QStash docs
+        # This is a placeholder for the actual verification logic
+        receiver = Receiver(
+            current_signing_key=settings.qstash_current_signing_key,
+            next_signing_key=settings.qstash_next_signing_key
+        )
+        
+        body = request.body()
+        is_valid = receiver.verify(body=body, signature=signature)
+        
+        if not is_valid:
+            raise HTTPException(status_code=401, detail="Invalid signature")
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"QStash signature verification failed: {e}")
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+@router.post("/test")
+async def test_task(
+    request: Request,
+    verify: bool = Depends(verify_qstash_signature)
+):
+    """Handle test task from QStash."""
+    try:
+        body = await request.json()
+        message = body.get("message", "")
+        
+        logger.info(f"Received task message: {message}")
+        
+        # Process your task here
+        # Example: send email, process data, etc.
+        
+        return {"message": "Task received and processed"}
+        
+    except Exception as e:
+        logger.error(f"Error processing task: {e}")
+        raise HTTPException(status_code=500, detail="Task processing failed")
+```
 5. Trigger a task
-To trigger your task, you can use the qstashClient to send a request to the task router:
+To trigger your task, you can use the qstash client to send a request to the task router:
 
+```python
+from app.services.qstash import get_qstash_client
+from app.core.config import settings
 
-import { qstashClient } from "../lib/qstash";
- 
-await qstashClient.publishJSON({
-	url: `${getBaseUrl()}/api/tasks/test`,
-	body: {
-		message: "Hello, world!"
-	}
-});
+async def trigger_test_task(message: str):
+    """Trigger a test task via QStash."""
+    client = get_qstash_client()
+    
+    result = await client.publish_json(
+        url=f"{settings.api_base_url}/tasks/test",
+        body={"message": message}
+    )
+    
+    return result
+```
+
+Usage in your FastAPI endpoints:
+
+```python
+from fastapi import APIRouter
+from app.services.qstash import trigger_test_task
+
+@router.post("/trigger-task")
+async def trigger_task():
+    result = await trigger_test_task("Hello from FastAPI!")
+    return {"status": "Task triggered", "result": result}
+```
 6. Usage Examples
-Cron jobs
-To schedule a task to run at a specific time, you can use the qstashClient to create a cron job:
 
+**Cron jobs**
+To schedule a task to run at a specific time, you can use the qstash client to create a cron job:
 
-import { qstashClient } from "@/lib/qstash";
- 
-await client.schedules.create({
-  destination: `${getBaseUrl()}/api/tasks/test`,
-  cron: "*/1 * * * *",
-});
-Queues
-To create a queue, you can use the qstashClient to create a queue and create a sequence of tasks to be executed.
+```python
+from app.services.qstash import get_qstash_client
+from app.core.config import settings
 
+async def create_cron_job():
+    """Create a cron job that runs every minute."""
+    client = get_qstash_client()
+    
+    schedule = await client.schedules.create(
+        destination=f"{settings.api_base_url}/tasks/test",
+        cron="*/1 * * * *"  # Every minute
+    )
+    
+    return schedule
+```
 
-import { qstashClient } from "@/lib/qstash";
- 
-const queue = await qstashClient.queues.create({
-	name: "my-queue",
-});
- 
-await queue.enqueueJSON({
-	url: `${getBaseUrl()}/api/tasks/step-1`,
-	body: {
-		message: "Hello, world!"
-	}
-});
- 
-await queue.enqueueJSON({
-	url: `${getBaseUrl()}/api/tasks/step-2`,
-	body: {
-		message: "Hello, world!"
-	}
-});
+**Queues**
+To create a queue, you can use the qstash client to create a queue and sequence of tasks:
+
+```python
+from app.services.qstash import get_qstash_client
+from app.core.config import settings
+
+async def create_task_queue():
+    """Create a queue with sequential tasks."""
+    client = get_qstash_client()
+    
+    # Create a queue
+    queue = await client.queues.create(name="my-queue")
+    
+    # Add tasks to the queue
+    await queue.enqueue_json(
+        url=f"{settings.api_base_url}/tasks/step-1",
+        body={"message": "Step 1: Hello, world!"}
+    )
+    
+    await queue.enqueue_json(
+        url=f"{settings.api_base_url}/tasks/step-2", 
+        body={"message": "Step 2: Processing complete!"}
+    )
+    
+    return queue
+```
 Previous
 
 trigger.dev

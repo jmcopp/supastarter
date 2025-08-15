@@ -1,200 +1,344 @@
-Setup
-Learn how to setup your supastarter application.
+# Setup Guide
 
-This guide will walk you through setting up supastarter. We will go through the process of cloning the project, installing dependencies, setting up your database and running the local development server.
+Learn how to set up supastarter's multi-container architecture for development.
 
-Prerequisites
-Before you can get started, you will need to have the following installed on your machine.
+## Overview
 
-Node.js (v20 or higher)
-Git
-pnpm
-VSCode (recommended, or any other code editor)
-Project setup
-Create a new database
-supastarter uses Prisma as an ORM (database access layer). This means you can use any database supported by Prisma, including PostgreSQL, MySQL and MongoDB. You can find all supported databases here.
+This guide covers the complete setup process for supastarter's modern architecture:
+- **Multi-container development** with hot reloading
+- **Supabase integration** for database, auth, and storage
+- **FastAPI + Next.js** full-stack setup
+- **Production-ready configuration** from day one
 
-Before creating a new supastarter project, make sure to have created a new database and have the connection string ready. For example when using PostgreSQL, the connection string will look something like this:
+## Prerequisites
 
+Before getting started, ensure you have:
 
-postgresql://user:password@host:port/database
-Recommended database providers are Supabase, PlanetScale and Neon.
+- **Node.js** (v20 or higher)
+- **Python** (3.11 or higher) 
+- **Git**
+- **pnpm** for Node.js dependency management
+- **Docker** (for production deployment)
+- **Supabase account** (free tier available)
+- **VSCode** (recommended) or any code editor
+## Project Setup
 
-You can also find setup guides for certain providers in the supastarter blog:
+### Step 1: Create Supabase Project
 
-Supabase
-Initialize a new supastarter project
-During the setup process you will be asked to provide the following information:
+Supastarter uses **Supabase** as the primary backend infrastructure:
 
-Project name - The name of your project
-Database provider - The database provider you are using
-Database connection string - The connection string of your database
-To create a new supastarter project all you need to do is run the following command (replace my-awesome-project with the name of your project):
+1. **Create account**: Go to [supabase.io](https://supabase.io) and sign up
+2. **Create new project**: Click "New project" and configure:
+   - Project name: `my-supastarter-app`
+   - Database password: Generate a strong password
+   - Region: Choose closest to your users
+3. **Wait for setup**: Takes ~2 minutes to initialize
 
+### Step 2: Get Supabase Credentials
 
-npx supastarter new my-awesome-project
-This will clone and configure the supastarter repository, install all the dependencies and set up the database for you.
+In your Supabase dashboard:
 
-Manual setup
-The following steps are only necessary if you encounter any errors during the setup process, otherwise you can skip to step 3.
+1. **API Settings** (`Settings > API`):
+   - Copy `Project URL`
+   - Copy `anon public` key
+   - Copy `service_role` key (keep private)
+   - Copy `JWT Secret`
 
-Clone the supastarter repository
+2. **Database Settings** (`Settings > Database`):
+   - Copy connection string under "Connection pooler"
+   - Copy direct connection string
 
-git clone https://github.com/supastarter/supastarter-nextjs.git
-Install the dependencies
-Make sure you have installed pnpm before running the following command:
+**Example connection strings**:
+```bash
+# Pooled connection (for app)
+DATABASE_URL="postgresql://postgres:[password]@db.[project-ref].supabase.co:6543/postgres?pgbouncer=true"
 
+# Direct connection (for migrations)
+DIRECT_URL="postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres"
+```
+### Step 3: Clone and Initialize Project
 
-pnpm install
-Set up the environment variables
-To do this, copy the .env.local.example file in the root of your project and rename it to .env.local.
+```bash
+# Clone the repository
+git clone https://github.com/supastarter/supastarter-nextjs.git my-supastarter-app
+cd my-supastarter-app
 
-Then open the .env.local file and set at least the DATABASE_URL:
+# Install dependencies
+npm install  # or pnpm install
 
-.env.local
+# Install Python dependencies (for API)
+cd api-main
+pip install -r requirements.txt
+cd ..
+```
 
+### Step 4: Environment Configuration
+
+Create environment files:
+
+#### Frontend Environment (`.env.local`)
+```bash
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL="https://[project-ref].supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJ..."
+NEXT_PUBLIC_API_URL="http://localhost:8000"
+
+# Development
+NODE_ENV="development"
+```
+
+#### API Environment (`api-main/.env`)
+```bash
 # Database
-DATABASE_URL="YOUR_DATABASE_CONNECTION_STRING"
-If you are using Supabase, you want to follow our Supabase setup guide as you will need a second connection string for the database migration.
+DATABASE_URL="postgresql://postgres:[password]@db.[project-ref].supabase.co:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres"
 
-Configure the database
-Prisma
-You can skip this step if you are using PostgreSQL.
+# Supabase
+SUPABASE_URL="https://[project-ref].supabase.co"
+SUPABASE_SERVICE_KEY="eyJ..."  # service_role key
+SUPABASE_JWT_SECRET="your-jwt-secret"
 
-If you are using a different database than PostgreSQL, you will need to configure the database provider in the /packages/database/prisma/schema.prisma file.
+# Configuration
+USE_SUPABASE_AUTH="true"
+ENVIRONMENT="development"
+```
 
-packages/database/prisma/schema.prisma
+### Step 5: Database Schema Setup
 
-datasource db {
-  provider = "mysql" // or "mongodb"
+Initialize your database with SQLModel schemas:
+
+```bash
+# Navigate to API directory
+cd api-main
+
+# Run database migrations
+alembic upgrade head
+
+# Or create tables programmatically
+python -c "from app.models import *; from app.core.database import engine; SQLModel.metadata.create_all(engine)"
+```
+
+### Step 6: Enable Row Level Security (RLS)
+
+In Supabase SQL Editor, run:
+
+```sql
+-- Enable RLS on all tables
+ALTER TABLE public.items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for user data isolation
+CREATE POLICY "Users access own items" ON public.items
+  FOR ALL USING (auth.uid() = owner_id);
+
+CREATE POLICY "Users access own organizations" ON public.organizations
+  FOR ALL USING (auth.uid() = owner_id);
+
+-- Performance indexes
+CREATE INDEX idx_items_owner_id ON public.items(owner_id);
+CREATE INDEX idx_organizations_owner_id ON public.organizations(owner_id);
+```
+
+### Step 7: Storage Setup (Optional)
+
+For file uploads (avatars, documents):
+
+1. **Create Storage Bucket** in Supabase:
+   - Go to `Storage` in dashboard
+   - Click "Create bucket"
+   - Name: `avatars` (keep private)
+
+2. **Get S3 Credentials**:
+   - Go to `Settings > Storage`
+   - Create new S3 access key
+   - Copy Access Key ID and Secret
+
+3. **Add to environment**:
+```bash
+# Add to api-main/.env
+S3_ACCESS_KEY_ID="your-access-key"
+S3_SECRET_ACCESS_KEY="your-secret-key"
+S3_ENDPOINT="https://[project-ref].supabase.co/storage/v1/s3"
+S3_BUCKET_NAME="avatars"
+```
+
+### Step 8: Email Provider Setup
+
+For transactional emails (auth, notifications):
+
+1. **Choose provider**: Recommended options:
+   - **Resend** (easiest setup)
+   - **Postmark** (high deliverability)
+   - **SendGrid** (scalable)
+
+2. **Configure in API** (`api-main/app/core/mail.py`):
+```python
+# Email configuration
+from app.core.config import settings
+
+EMAIL_CONFIG = {
+    "provider": "resend",  # or "postmark", "sendgrid"
+    "api_key": settings.RESEND_API_KEY,
+    "from_email": "hello@yourdomain.com",
 }
-You will also need to change the database provider in the /packages/auth/auth.ts file:
+```
 
-packages/auth/auth.ts
+3. **Environment variables**:
+```bash
+# Add to api-main/.env
+RESEND_API_KEY="re_..."
+# or POSTMARK_SERVER_TOKEN="..."
+# or SENDGRID_API_KEY="..."
+```
 
-export const auth = betterAuth({
-	database: prismaAdapter(db, {
-		provider: "mysql", // or "mongodb"
-	}),
-});
-In case you are using MySQL, you will also need to remove all occurrences of mode: "insensitive" from the project. This is a feature that Prisma does not support for MySQL, so it will cause errors on build. Simply search in the project for mode: "insensitive" and remove it.
+### Step 9: Payment Provider Setup
 
-Drizzle
-If you want to use Drizzle instead of Prisma, you will need to change the export in the /packages/database/index.ts file:
+For subscriptions and payments:
 
-packages/database/index.ts
+1. **Choose provider**:
+   - **Stripe** (most popular)
+   - **LemonSqueezy** (indie-friendly)
+   - **Paddle** (global taxes)
 
-export * from "./drizzle";
-Next make sure to use the drizzle adapter in the /packages/auth/auth.ts file:
+2. **Configure Stripe** (`api-main/app/core/payments.py`):
+```python
+import stripe
+from app.core.config import settings
 
-packages/auth/auth.ts
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
-export const auth = betterAuth({
-	database: drizzleAdapter(db, {
-		provider: "mysql", // or "sqlite" or "pg"
-	}),
-});
-If you are using a different database than PostgreSQL, you will need to export the schema for either mysql or sqlite from the /packages/database/drizzle/schemaindex].ts file.
+# Webhook endpoint
+@router.post("/webhooks/stripe")
+async def stripe_webhook(request: Request):
+    # Handle Stripe webhooks
+    pass
+```
 
-packages/database/drizzle/schema/index.ts
+3. **Environment variables**:
+```bash
+# Add to .env.local and api-main/.env
+STRIPE_PUBLISHABLE_KEY="pk_test_..."
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+```
+### Step 10: Verify Database Setup
 
-export * from "./postgres";
-// or export * from "./mysql";
-// or export * from "./sqlite";
-Lastly, you will need to set up the correct database client in the client.ts file. Follow the instructions in the Drizzle documentation for the database provider you are using. For PostgreSQL you can use the following example:
+1. **Check tables** in Supabase dashboard:
+   - Go to `Table Editor`
+   - Verify your tables were created
+   - Check RLS policies are enabled
 
-packages/database/drizzle/client.ts
+2. **Test database connection**:
+```bash
+# Test from API container
+cd api-main
+python -c "from app.core.database import engine; print('Database connected:', engine.url)"
+```
 
-import { drizzle } from "drizzle-orm/node-postgres";
-import * as schema from "./schema/postgres";
- 
-const databaseUrl = process.env.DATABASE_URL as string;
- 
-if (!databaseUrl) {
-	throw new Error("DATABASE_URL is not set");
-}
- 
-export const db = drizzle(databaseUrl, {
-	schema,
-});
-Read more about how to use the ORMs in the database documentation.
+3. **Create test user** in Supabase:
+   - Go to `Authentication > Users`
+   - Click "Add user"
+   - Add email and password for testing
+### Step 11: Initialize Git Repository
 
-Select your mail provider
-Select your mail provider which is used for sending transactional emails like the magic link for login.
-
-In the /packages/mail/src/providers/index.ts file, set the export to the provider you want to use:
-
-
-export * from "./plunk";
-// or export * from './resend';
-// or export * from './postmark';
-// or export * from './nodemailer';
-Then make sure to set the mandatory environment variables for your provider in the .env.local file:
-
-Plunk -> PLUNK_API_KEY
-Resend -> RESEND_API_KEY
-Postmark -> POSTMARK_SERVER_TOKEN
-Nodemailer -> MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS
-If you want to use a custom mail provider, use the /packages/mail/src/providers/custom.ts file and export from custom.ts.
-
-Set up the payment provider
-Next, we need to set the payment provider which is used for handling payments::
-
-packages/payments/provider/index.ts
-
-export * from "./stripe";
-// or export * from './lemonsqueezy';
-// or export * from './creem';
-// or export * from './polar';
-Push and generate the database schema
-Make sure to check your schema in packages/database/prisma/schema.prisma before continuing.
-
-To push the database schema to your database, run the following command:
-
-
-pnpm --filter database push
-Then, to generate the Prisma client, run the following command:
-
-
-pnpm --filter database generate
-Set up the supastarter repository as the upstream origin
-The last step is to set the supastarter repository as the upstream origin for your project, so you can pull in updates in the future.
-
-Run the following commands:
-
-
+```bash
+# Initialize new Git repository
 rm -rf .git
 git init
-git remote add upstream https://github.com/supastarter/supastarter-nextjs.git
 git add .
-git commit -m "Initial commit"
-Set up your storage provider
-Storage is necessary to upload and serve files like images for example for the avatars of users and teams. Setting up a storage provider is optional, but recommended and necessary if you want to enable avatar and logo uploads.
+git commit -m "Initial supastarter setup"
 
-supastarter supports all S3-compatible storage providers like AWS S3, DigitalOcean Spaces, MinIO, etc. and Supabase Storage.
+# Add upstream for updates
+git remote add upstream https://github.com/supastarter/supastarter-nextjs.git
+```
 
-Storage setup guide
+## Development Server
 
-Set up your local development environment (optional)
-If you want to set up a complete local development environment, you can follow the local development guide.
+### Start Both Services
 
-Start your development server
-Now your app should be ready to go. To start the local development server, navigate into your project root folder and run the following command.
+Open **two terminals**:
 
+#### Terminal 1: FastAPI Backend
+```bash
+cd api-main
 
-pnpm dev
-Open http://localhost:3000 in your browser to see the your app.
+# Start FastAPI with hot reload
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-Create admin user
-To use your application, you want to create an admin user. You can use a simple CLI script to create a new admin user in the database:
+# API will be available at:
+# http://localhost:8000 (API endpoints)
+# http://localhost:8000/docs (Swagger UI)
+# http://localhost:8000/redoc (ReDoc)
+```
 
+#### Terminal 2: Next.js Frontend
+```bash
+# Start Next.js with hot reload
+npm run dev
+# or: pnpm dev
 
-pnpm --filter scripts create:user
-Enter the email, the name and select the role Admin to create a new admin user:
+# Frontend will be available at:
+# http://localhost:3000
+```
 
+### Verify Setup
 
+1. **API Health**: Visit `http://localhost:8000/health`
+2. **API Docs**: Visit `http://localhost:8000/docs`
+3. **Frontend**: Visit `http://localhost:3000`
+4. **Authentication**: Try signing up/logging in
 
-You will see an automatically generated password in the terminal, which you can use to login to your application.
+### Create Admin User
+
+Use Supabase Auth dashboard or create programmatically:
+
+```python
+# api-main/scripts/create_admin.py
+from app.core.auth import create_admin_user
+
+async def create_admin():
+    user = await create_admin_user(
+        email="admin@yourdomain.com",
+        password="secure-password",
+        role="admin"
+    )
+    print(f"Admin user created: {user.email}")
+
+# Run: python scripts/create_admin.py
+```
+
+## Next Steps
+
+1. **[Configure your application](Configuration.md)** - Customize branding, features
+2. **[Set up authentication](Authentication/Overview.md)** - OAuth providers, policies
+3. **[Deploy to production](Deployment/Fly_io.md)** - Multi-container Fly.io deployment
+4. **[Add custom features](Customization/Overview.md)** - Extend functionality
+
+## Troubleshooting
+
+### Common Issues
+
+**Database Connection Errors**
+- Verify Supabase project is active
+- Check connection strings are correct
+- Ensure RLS policies don't block access
+
+**Authentication Issues**
+- Check JWT secret matches between Supabase and API
+- Verify CORS settings allow localhost
+- Test with Supabase Auth directly first
+
+**API Not Starting**
+- Check Python dependencies are installed
+- Verify environment variables are set
+- Look for import errors in logs
+
+**Frontend Build Errors**
+- Clear node_modules and reinstall
+- Check environment variables are prefixed with NEXT_PUBLIC_
+- Verify API_URL is accessible
+
+Your supastarter application is now ready for development! 🚀
 
 Previous
 

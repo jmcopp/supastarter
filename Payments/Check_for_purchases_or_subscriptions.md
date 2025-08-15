@@ -7,16 +7,73 @@ Plan ID
 The plan id is used to identify a plan. It is defined in the key property of the plan object from the config file like free, pro, enterprise or lifetime from the example config.
 
 Check for purchases or subscriptions on client side
-You can check if a user has a purchase or subscription by using the usePurchases hook.
+You can check if a user has a purchase or subscription by creating custom hooks that call the FastAPI endpoints.
 
-The usePurchases hook returns the following properties:
+Create a custom hook to fetch purchase data:
 
-activePlan: The active plan of the user
-purchases: An array of all the purchases of the user
-hasSubscription: A function to check if the user has an active subscription. Optionally takes a plan id or an array of plan ids as argument to check for specific plans.
-hasPurchase: A function to check if the user has a specifc purchase for a given plan id
+```tsx
+import { useQuery } from '@tanstack/react-query';
 
- 
+interface Purchase {
+    id: string;
+    plan_id: string;
+    type: 'subscription' | 'one_time';
+    status: 'active' | 'cancelled' | 'expired';
+    // ... other properties
+}
+
+export function usePurchases(organizationId?: string) {
+    const { data: purchases = [], ...query } = useQuery({
+        queryKey: ['purchases', organizationId],
+        queryFn: async () => {
+            const url = organizationId 
+                ? `/api/purchases?organization_id=${organizationId}`
+                : '/api/purchases';
+            
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch purchases');
+            }
+            
+            return response.json();
+        }
+    });
+
+    const activePlan = purchases.find((p: Purchase) => p.status === 'active')?.plan_id || 'free';
+    
+    const hasSubscription = (planIds?: string | string[]) => {
+        if (!planIds) {
+            return purchases.some((p: Purchase) => p.type === 'subscription' && p.status === 'active');
+        }
+        
+        const plans = Array.isArray(planIds) ? planIds : [planIds];
+        return purchases.some((p: Purchase) => 
+            p.type === 'subscription' && 
+            p.status === 'active' && 
+            plans.includes(p.plan_id)
+        );
+    };
+    
+    const hasPurchase = (planIds: string | string[]) => {
+        const plans = Array.isArray(planIds) ? planIds : [planIds];
+        return purchases.some((p: Purchase) => plans.includes(p.plan_id));
+    };
+
+    return {
+        activePlan,
+        purchases,
+        hasSubscription,
+        hasPurchase,
+        ...query
+    };
+}
+
+// Usage in component
 function SomeComponent() {
     const { activePlan, hasSubscription, hasPurchase } = usePurchases();
  
@@ -25,55 +82,131 @@ function SomeComponent() {
  
     // check if the user has a purchase for the pro plan
     const hasProPurchase = hasPurchase("pro");
-    // or check if the user has a purchase for the pro plan or the enterprise plan
+    
+    // check if the user has a purchase for the pro plan or the enterprise plan
     const hasProOrEnterprisePurchase = hasPurchase(["pro", "enterprise"]);
  
     // check if the user has a purchase of the lifetime plan
     const hasLifetimeAccess = hasPurchase("lifetime");
 }
+```
 Check for purchases on server side
-You can also check for purchases and get the active plan on the server side by utilizing the createPurchasesHelper function, which will generate a bunch of helper functions based on the purchases you pass to it.
+You can also check for purchases and get the active plan on the server side using FastAPI endpoints and services.
 
-The createPurchasesHelper can be used in both RSC and API routes, but the way to fetch the purchases is different:
+Create a service to handle purchase logic:
 
-RSC
-When you are inside your Next.js application in a RSC, you can use the getPurchases function from the @saas/payments/lib/server file.
+api/app/services/purchases.py
 
+```python
+from sqlmodel import Session, select
+from app.models.purchase import Purchase
+from typing import List, Optional, Union
 
-import { getPurchases } from "@saas/payments/lib/server";
-import { createPurchasesHelper } from "@repo/payments/lib/helper";
- 
-const purchases = await getPurchases();
- 
-const { activePlan, hasSubscription, hasPurchase } = createPurchasesHelper(purchases);
-API routes
-When you are inside an API route, you can use the relative import of getPurchases function from the packages/api/src/routes/payments/lib/purchases file. You also need to pass the organization id or the user id as an argument to the getPurchases function.
+class PurchasesHelper:
+    def __init__(self, purchases: List[Purchase]):
+        self.purchases = purchases
+    
+    @property
+    def active_plan(self) -> str:
+        """Get the active plan ID, defaults to 'free' if no active purchases."""
+        active_purchase = next(
+            (p for p in self.purchases if p.status == 'active'), 
+            None
+        )
+        return active_purchase.plan_id if active_purchase else 'free'
+    
+    def has_subscription(self, plan_ids: Optional[Union[str, List[str]]] = None) -> bool:
+        """Check if user has an active subscription."""
+        if not plan_ids:
+            return any(p.type == 'subscription' and p.status == 'active' 
+                      for p in self.purchases)
+        
+        plans = [plan_ids] if isinstance(plan_ids, str) else plan_ids
+        return any(
+            p.type == 'subscription' and 
+            p.status == 'active' and 
+            p.plan_id in plans
+            for p in self.purchases
+        )
+    
+    def has_purchase(self, plan_ids: Union[str, List[str]]) -> bool:
+        """Check if user has a purchase for specific plan(s)."""
+        plans = [plan_ids] if isinstance(plan_ids, str) else plan_ids
+        return any(p.plan_id in plans for p in self.purchases)
 
+async def get_purchases(
+    session: Session, 
+    user_id: Optional[str] = None, 
+    organization_id: Optional[str] = None
+) -> List[Purchase]:
+    """Get purchases for a user or organization."""
+    query = select(Purchase)
+    
+    if organization_id:
+        query = query.where(Purchase.organization_id == organization_id)
+    elif user_id:
+        query = query.where(Purchase.user_id == user_id)
+    
+    return list(session.exec(query).all())
 
-import { getPurchases } from "../../payments/lib/purchases";
-import { createPurchasesHelper } from "@repo/payments/lib/helper";
-import { authMiddleware } from "../../lib/middleware";
- 
-const someRouter = new Hono()
-    .get('/', authMiddleware, async (c) => {
-        const { organizationId } = c.req.param();
-        const user = c.get('user');
- 
-        const purchases = await getPurchases({ organizationId }); // or getPurchases({ userId: user.id })
-        const { activePlan, hasSubscription, hasPurchase } = createPurchasesHelper(purchases);
- 
-        // do something with the helpers here...
-    })
+def create_purchases_helper(purchases: List[Purchase]) -> PurchasesHelper:
+    """Create a purchases helper with the given purchases."""
+    return PurchasesHelper(purchases)
+```
+
+Using in FastAPI endpoints:
+
+```python
+from fastapi import APIRouter, Depends
+from app.core.auth import get_current_user
+from app.core.database import get_session
+from app.services.purchases import get_purchases, create_purchases_helper
+
+@router.get("/some-endpoint")
+async def some_endpoint(
+    organization_id: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    purchases = await get_purchases(
+        session, 
+        organization_id=organization_id or None,
+        user_id=current_user.id if not organization_id else None
+    )
+    
+    helper = create_purchases_helper(purchases)
+    
+    # Use the helper methods
+    active_plan = helper.active_plan
+    has_subscription = helper.has_subscription()
+    has_pro = helper.has_purchase("pro")
+    
+    return {
+        "active_plan": active_plan,
+        "has_subscription": has_subscription,
+        "has_pro": has_pro
+    }
+```
 Check for purchases of organization
-Both usePurchases and getPurchases also support organizations. Simply pass the organization id as an argument.
+Both the React hook and FastAPI service support organizations. Simply pass the organization_id as an argument.
 
-
-// ... get the organization slug from the url
-const organization = await getActiveOrganization(organizationSlug);
-const purchases = await getPurchases(organizationId);
-
+**Client side:**
+```tsx
 const { activeOrganization } = useActiveOrganization();
-const { activePlan, hasSubscription, hasPurchase } = usePurchases(activeOrganization!.id);
+const { activePlan, hasSubscription, hasPurchase } = usePurchases(activeOrganization?.id);
+```
+
+**Server side:**
+```python
+# Get organization purchases
+purchases = await get_purchases(
+    session, 
+    organization_id=organization_id
+)
+
+helper = create_purchases_helper(purchases)
+active_plan = helper.active_plan
+```
 Previous
 
 Manage plans and products

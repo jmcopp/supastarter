@@ -5,90 +5,87 @@ Before we get started, make sure to create a new trigger.dev and project.
 
 You can find a full example of this recipe in the feat/trigger.dev branch of the supastarter-nextjs repository.
 
-1. Create a new package in your repository
-Create a new folder tasks in the /packages directory and add the following files:
+1. Create a new tasks module in your FastAPI application
+Create a new directory for tasks in your FastAPI project and add the following files:
 
-packages/tasks/package.json
+api/tasks/requirements.txt
 
-{
-	"dependencies": {
-		"@repo/database": "workspace:*",
-		"@trigger.dev/sdk": "3.3.17"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "2.1.0",
-		"@trigger.dev/build": "3.3.17",
-		"@repo/tsconfig": "workspace:*"
-	},
-	"main": "./index.ts",
-	"name": "@repo/tasks",
-	"scripts": {
-		"type-check": "tsc --noEmit",
-		"dev": "pnpm dlx trigger.dev@latest dev --env-file ../../.env.local",
-		"deploy": "pnpm dlx trigger.dev@latest deploy"
-	},
-	"version": "0.0.0"
-}
-packages/tasks/tsconfig.json
+```
+trigger.dev==3.3.17
+sqlmodel>=0.0.8
+pydantic>=2.0.0
+```
 
-{
-	"extends": "@repo/tsconfig/base.json",
-	"include": ["**/*.ts"],
-	"exclude": ["dist", "build", "node_modules"]
-}
-packages/tasks/trigger.config.ts
+api/tasks/pyproject.toml
 
-import { additionalPackages } from "@trigger.dev/build/extensions/core";
-import { prismaExtension } from "@trigger.dev/build/extensions/prisma";
-import { defineConfig } from "@trigger.dev/sdk/v3";
- 
-export default defineConfig({
-	project: "your_project_id",
-	runtime: "node",
-	tsconfig: "./tsconfig.json",
-	logLevel: "log",
-	maxDuration: 300,
-	dirs: ["./trigger"],
-	build: {
-		extensions: [
-			additionalPackages({ packages: ["zod-prisma-types"] }),
-			prismaExtension({
-				schema: "../database/prisma/schema.prisma",
-				clientGenerator: "client",
-				typedSql: true,
-				directUrlEnvVarName: "DATABASE_URL_UNPOOLED",
-			}),
-		],
-		external: [
-			"@react-email/render",
-			"@react-email/components",
-			"react-dom",
-			"react",
-		],
-	},
-});
+```toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "supastarter-tasks"
+version = "0.1.0"
+dependencies = [
+    "trigger.dev==3.3.17",
+    "sqlmodel>=0.0.8",
+    "pydantic>=2.0.0",
+]
+
+[project.scripts]
+dev = "trigger-cli dev --env-file ../.env"
+deploy = "trigger-cli deploy"
+```
+api/tasks/trigger.config.py
+
+```python
+from trigger import configure
+
+configure(
+    project="your_project_id",
+    runtime="python",
+    log_level="info",
+    max_duration=300,
+    dirs=["./trigger_tasks"],
+    # Database connection will use your existing FastAPI database connection
+)
+```
 2. Create your first task
-Now to create your first task, create a new file test-task.ts in the packages/tasks/trigger directory and add the following code:
+Now to create your first task, create a new file test_task.py in the api/tasks/trigger_tasks directory and add the following code:
 
-packages/tasks/trigger/test-task.ts
+api/tasks/trigger_tasks/test_task.py
 
-import { task } from "@trigger.dev/sdk/v3";
- 
-export const testTask = task({
-	id: "test-task",
-	run: async () => {
-		console.log("test task");
-	},
-});
+```python
+from trigger import task
+import logging
+
+logger = logging.getLogger(__name__)
+
+@task(id="test-task")
+async def test_task():
+    """A simple test task to verify trigger.dev integration."""
+    logger.info("Test task executed successfully")
+    return {"status": "completed", "message": "Test task ran"}
+```
 Read the trigger.dev documentation for more information on how to create tasks or cron jobs.
 
 3. Test your task
-You can easily test your task locally by running pnpm --filter tasks dev from the root of your repository.
+You can easily test your task locally by navigating to the tasks directory and running:
+
+```bash
+cd api/tasks
+python -m trigger dev
+```
 
 This will deploy your task to trigger.dev in the development environment, so you can trigger it from there. When you run the task in the development environment, it will be executed on your local machine.
 
 4. Deploy your task
-To deploy your task to trigger.dev, run pnpm --filter tasks deploy from the root of your repository.
+To deploy your task to trigger.dev, run:
+
+```bash
+cd api/tasks
+python -m trigger deploy
+```
 
 You can also add this command as an automated deployment step in your CI/CD pipeline, by creating a new github action.
 
@@ -119,35 +116,57 @@ jobs:
         env:
           TRIGGER_ACCESS_TOKEN: ${{ secrets.TRIGGER_ACCESS_TOKEN }}
         run: |
-          pnpm --filter tasks deploy
+          cd api/tasks
+          python -m trigger deploy
+
 5. Programmatically trigger a task
-If you want to trigger one of your tasks from your application, for example as an action from an API call, you can import the task to your API resolver and trigger it.
+If you want to trigger one of your tasks from your FastAPI application, for example as an action from an API call, you can import and trigger the task.
 
-Make sure to add the @repo/tasks package to your api package as a dependency.
+Create a trigger client in your FastAPI app:
 
-api/actions/test-task.ts
+api/app/services/tasks.py
 
-import { testTask } from "@repo/tasks/trigger/test-task";
- 
-import { logger } from "@repo/logs";
-import { sendEmail } from "@repo/mail";
-import { Hono } from "hono";
-import { describeRoute } from "hono-openapi";
-import { resolver, validator } from "hono-openapi/zod";
-import { z } from "zod";
-import { localeMiddleware } from "../middleware/locale";
- 
-export const newsletterRouter = new Hono().basePath("/newsletter").post(
-	"/signup",
- // ...
-	async (c) => {
-  // ...
- 
-        await testTask.trigger();
- 
-        // ...
-	},
-);
+```python
+from trigger import TriggerClient
+import os
+
+# Initialize trigger client
+trigger_client = TriggerClient(
+    api_key=os.getenv("TRIGGER_ACCESS_TOKEN"),
+    endpoint="https://api.trigger.dev"
+)
+
+async def trigger_test_task():
+    """Trigger the test task."""
+    result = await trigger_client.send_event(
+        event_name="test-task",
+        payload={}
+    )
+    return result
+```
+
+Use in your FastAPI endpoints:
+
+api/app/routers/newsletter.py
+
+```python
+from fastapi import APIRouter, BackgroundTasks
+from app.services.tasks import trigger_test_task
+
+router = APIRouter(prefix="/newsletter", tags=["newsletter"])
+
+@router.post("/signup")
+async def newsletter_signup(
+    email: str,
+    background_tasks: BackgroundTasks
+):
+    # Handle newsletter signup logic...
+    
+    # Trigger the background task
+    background_tasks.add_task(trigger_test_task)
+    
+    return {"message": "Subscription successful"}
+```
 Previous
 
 Overview

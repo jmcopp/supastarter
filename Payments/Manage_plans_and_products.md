@@ -4,7 +4,7 @@ Learn how to manage plans and products in your application.
 
 
 Define plans and products
-You can manage the plans and products in the configuration file of your supastarter project.
+You can manage the plans and products in the FastAPI configuration file of your supastarter project.
 
 There are different types of plans you can define:
 
@@ -13,33 +13,38 @@ The free plan is the default plan for users who have not purchased any plans or 
 
 As this is no paid plan, you don't need to define any prices or attach a product id to it.
 
-config/index.ts
+api/app/core/config.py
 
-export const config = {
-  payments: {
-    plans: {
-        free: {
-            isFree: true,
+```python
+from pydantic_settings import BaseSettings
+from typing import Dict, List, Any
+
+class Settings(BaseSettings):
+    payments_plans: Dict[str, Any] = {
+        "free": {
+            "is_free": True,
         },
     }
-  },
-};
+    
+    class Config:
+        env_file = ".env"
+```
 Enterprise plan
 The enterprise plan is not a real plan, but will show up in the pricing table with a link to a contact form, so customers can contact you to get access to your product.
 
 As this is no paid plan, you don't need to define any prices or attach a product id to it.
 
-config/index.ts
-
-export const config = {
-  payments: {
-    plans: {
-        enterprise: {
-            isEnterprise: true,
+```python
+class Settings(BaseSettings):
+    payments_plans: Dict[str, Any] = {
+        "enterprise": {
+            "is_enterprise": True,
         },
     }
-  },
-};
+    
+    class Config:
+        env_file = ".env"
+```
 Subscription plans and one-time purchase plans
 A plan represents a product or service of your application and each is a column in your pricing table. It has the following properties:
 
@@ -50,102 +55,103 @@ One plan can have multiple prices, for example a monthly and yearly price or/and
 
 A price has the following properties:
 
-type: the type of the price, can be recurring or one_time
-productId: the id of the product from the payment provider
-interval: the interval of the price, can be month, year, week or day
-intervalCount: the number of intervals to bill, defaults to 1
-amount: the amount of the price
-currency: the currency of the price, for example USD
-trialPeriodDays: the number of days of the trial period, leave out if you don't want to offer a trial period
-seatBased: if price is per seat (this will only work for organizations and will multiply the price by the number of members), defaults to false
-You can publish your site with a placeholder productId, if you need a landing page with pricing table to verify your store in Stripe or Lemonsqueezy. Just note that this will not work in production.
+- **type**: the type of the price, can be recurring or one_time
+- **product_id**: the id of the product from the payment provider
+- **interval**: the interval of the price, can be month, year, week or day
+- **interval_count**: the number of intervals to bill, defaults to 1
+- **amount**: the amount of the price
+- **currency**: the currency of the price, for example USD
+- **trial_period_days**: the number of days of the trial period, leave out if you don't want to offer a trial period
+- **seat_based**: if price is per seat (this will only work for organizations and will multiply the price by the number of members), defaults to false
+You can publish your site with a placeholder product_id, if you need a landing page with pricing table to verify your store in Stripe or Lemonsqueezy. Just note that this will not work in production.
 
-config/index.ts
-
-export const config = {
-  payments: {
-    plans: {
-        pro: {
-            recommended: true,
-            prices: [
+```python
+class Settings(BaseSettings):
+    payments_plans: Dict[str, Any] = {
+        "pro": {
+            "recommended": True,
+            "prices": [
                 {
-                    type: "recurring",
-                    productId: "price_as34asdflkh134kh",
-                    interval: "month",
-                    amount: 29,
-                    currency: "USD",
-                    trialPeriodDays: 7,
-                    seatBased: true,
+                    "type": "recurring",
+                    "product_id": "price_as34asdflkh134kh",
+                    "interval": "month",
+                    "amount": 29,
+                    "currency": "USD",
+                    "trial_period_days": 7,
+                    "seat_based": True,
                 },
                 {
-                    type: "recurring",
-                    productId: "price_as34asdflkh134kh",
-                    interval: "year",
-                    amount: 290,
-                    currency: "USD",
-                    trialPeriodDays: 7,
-                    seatBased: true,
+                    "type": "recurring",
+                    "product_id": "price_as34asdflkh134kh",
+                    "interval": "year",
+                    "amount": 290,
+                    "currency": "USD",
+                    "trial_period_days": 7,
+                    "seat_based": True,
                 },
             ],
         },
-        lifetime: {
-            prices: [
+        "lifetime": {
+            "prices": [
                 {
-                    type: "one_time",
-                    productId: "price_as34asdflkh134kh",
-                    amount: 999,
-                    currency: "USD",
+                    "type": "one_time",
+                    "product_id": "price_as34asdflkh134kh",
+                    "amount": 999,
+                    "currency": "USD",
                 },
             ],
         },
     }
-  },
-};
+    
+    class Config:
+        env_file = ".env"
+```
 Support multiple currencies
-To support multiple currencies, make sure to define the different currencies for each locale in the i18n section of the config file:
+To support multiple currencies, make sure to define the different currencies for each locale in the i18n section of the config:
 
-config/index.ts
-
-export const config = {
-  i18n: {
-    locales: {
-        en: {
-            currency: "USD",
+```python
+class Settings(BaseSettings):
+    i18n_locales: Dict[str, Dict[str, str]] = {
+        "en": {
+            "currency": "USD",
         },
-        de: {
-            currency: "EUR",
+        "de": {
+            "currency": "EUR",
         },
     }
-  },
-};
-Then define the prices for each locale in the payments.plans section of the config file:
+    
+    class Config:
+        env_file = ".env"
+```
 
-config/index.ts
+Then define the prices for each locale in the payments_plans section:
 
-export const config = {
-  payments: {
-    plans: {
-        pro: {
-            prices: [
+```python
+class Settings(BaseSettings):
+    payments_plans: Dict[str, Any] = {
+        "pro": {
+            "prices": [
                 {
-                    type: "recurring",
-                    productId: "price_as34asdflkh134kh",
-                    interval: "month",
-                    amount: 29,
-                    currency: "USD"
+                    "type": "recurring",
+                    "product_id": "price_as34asdflkh134kh",
+                    "interval": "month",
+                    "amount": 29,
+                    "currency": "USD"
                 },
                 {
-                    type: "recurring",
-                    productId: "price_as34asdflkh134kh",
-                    interval: "month",
-                    amount: 29,
-                    currency: "EUR"
+                    "type": "recurring",
+                    "product_id": "price_as34asdflkh134kh",
+                    "interval": "month",
+                    "amount": 29,
+                    "currency": "EUR"
                 },
             ],
         },
     }
-  },
-};
+    
+    class Config:
+        env_file = ".env"
+```
 Plan information for pricing table
 You can define the information for the pricing table for each plan in the usePlanData hook in /apps/web/modules/saas/payments/hooks/plan-data.ts.
 

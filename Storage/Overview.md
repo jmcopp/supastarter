@@ -1,14 +1,20 @@
 Overview
 Learn how to use storage in supastarter to store files in the cloud.
 
-With supastarter it's really easy to upload and store files like images or documents to the cloud. supastarter out-of-the-box uses the storage functionality to enable the upload of user avatars and organiaztion logos, but you can use it for any other kind of files as well.
+With supastarter it's really easy to upload and store files like images or documents to the cloud. supastarter out-of-the-box uses the storage functionality to enable the upload of user avatars and organization logos, but you can use it for any other kind of files as well.
 
 We currently support all S3 compatible storage providers like AWS S3, DigitalOcean Spaces, MinIO, etc. and Supabase Storage.
 
-Uploading files in a serverless architecture
-supastarter uses Next.js route handlers for providing the API, which have some limitations when being deployed on serverless platforms like Vercel or Netlify. For example there is a maximum execution time and a maximum payload size. These limitations are not a problem for most use cases, but if you need to upload very large files or need to process the files in a way that takes a long time, you might need to use a different approach.
+Uploading files in a scalable architecture
+supastarter uses FastAPI for the backend API with multi-container deployment support. This architecture provides excellent performance for file uploads while supporting both containerized and serverless deployments.
 
-That's why supastarter utilizes the presigned URLs feature provided by S3 compatible storage providers. That means instead of sending the files to the serverless function, the client requests a presigned URL from the serverless function and then uploads the file directly to the storage provider. This way you can make sure to not expose any credentials, handle authentication and authorization and also don't need to worry about the limitations of the serverless platforms.
+For optimal performance and security, supastarter utilizes the presigned URLs feature provided by S3 compatible storage providers. Instead of routing files through the FastAPI backend, the client requests a presigned URL from the API and then uploads the file directly to the storage provider. This approach:
+
+- Eliminates bandwidth costs on your API server
+- Provides better upload performance for large files
+- Maintains secure authentication and authorization
+- Works seamlessly with both containerized and serverless deployments
+- Enables better scalability as upload traffic doesn't affect your API performance
 
 Connect to S3 storage
 Upload files
